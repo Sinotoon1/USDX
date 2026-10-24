@@ -39,6 +39,7 @@ uses
   sdl2,
   SysUtils,
   UCommon,
+  UCoachCore,
   UMusic,
   UIni;
 
@@ -61,6 +62,7 @@ type
     private
       fVoiceStream: TAudioVoiceStream; // stream for voice passthrough
       fAnalysisBufferLock: PSDL_Mutex;
+      fCoachCaptureTick: Cardinal;
       fAudioFormat: TAudioFormatInfo;
       Frequencies: TFrequencyArray;
       Delays: TDelayArray;
@@ -86,6 +88,8 @@ type
 
       LogBuffer:   TMemoryStream;              // full buffer
 
+      CoachPitch: TCoachPitch;
+      CoachPitchTick: Cardinal;
       // pitch detection
       // TODO: remove ToneValid, set Tone/ToneAbs=-1 if invalid instead
       ToneValid: boolean;    // true if Tone contains a valid value (otherwise it contains noise)
@@ -342,6 +346,7 @@ begin
   try
 
     // move old samples to the beginning of the array (if necessary)
+    if SampleCount > 0 then fCoachCaptureTick := SDL_GetTicks;
     for i := 0 to High(AnalysisBuffer)-SampleCount do
       AnalysisBuffer[i] := AnalysisBuffer[i+SampleCount];
 
@@ -388,6 +393,13 @@ begin
     end;
 
     Threshold := IThresholdVals[Ini.ThresholdIndex];
+    if (CoachMode = cmPractice) and (SDL_GetTicks-CoachPitchTick >= 40) then
+    begin
+      CoachPitch := CoachDetectPitch(AnalysisBuffer, AnalysisBufferSize, AudioFormat.SampleRate);
+      if (MaxVolume < Threshold) or (SDL_GetTicks-fCoachCaptureTick > 150) then
+        CoachPitch.Valid := false;
+      CoachPitchTick := SDL_GetTicks;
+    end;
 
     // check if signal has an acceptable volume (ignore background-noise)
     if MaxVolume >= Threshold then

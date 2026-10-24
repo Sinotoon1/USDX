@@ -140,6 +140,7 @@ type
     Folder:       UTF8String; // for sorting by folder (only set if file was found)
     FileName:     IPath; // just name component of file (only set if file was found)
 
+    CoachReferenceReviewed: boolean;
     FormatVersion: TVersion;
 
     // filenames
@@ -1205,6 +1206,14 @@ begin
     begin
       RemoveTagsFromTagMap('MP3');
       CheckAndSetAudioFile(Value);
+    end;
+
+    // App-specific provenance: automatic references remain explicitly unreviewed.
+    CoachReferenceReviewed := true;
+    if TagMapTryGetData('COACH-REVIEW', Value) then
+    begin
+      CoachReferenceReviewed := SameText(Trim(Value), 'reviewed');
+      RemoveTagsFromTagMap('COACH-REVIEW');
     end;
 
     //Beats per Minute

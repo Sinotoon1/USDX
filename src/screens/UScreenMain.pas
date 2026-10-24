@@ -35,6 +35,7 @@ interface
 
 uses
   UConfig,
+  UCoachCore,
   UDisplay,
   UFiles,
   UMenu,
@@ -52,6 +53,7 @@ type
   public
     TextDescription:     integer;
     TextDescriptionLong: integer;
+    procedure StartCoach(Mode: TCoachMode);
 
     constructor Create; override;
     function ParseInput(PressedKey: Cardinal; CharCode: UCS4Char;
@@ -92,8 +94,10 @@ begin
   begin // Key Down
         // check normal keys
     case PressedKey of
+      SDLK_F6: begin StartCoach(cmPractice); Exit; end;
+      SDLK_F5: begin StartCoach(cmPlay); Exit; end;
       SDLK_S: begin
-        FadeTo(@ScreenName, SoundLib.Start);
+        StartCoach(cmPlay);
         Exit;
       end;
 
@@ -166,27 +170,8 @@ begin
         // reset
         Party.bPartyGame := false;
 
-        //Solo
-        if (Interaction = 0) then
-        begin
-          if (Songs.SongList.Count >= 1) then
-          begin
-            if (Ini.Players >= 0) and (Ini.Players <= 3) then
-              PlayersPlay := Ini.Players + 1;
-            if (Ini.Players = 4) then
-              PlayersPlay := 6;
-
-            if Ini.OnSongClick = sSelectPlayer then
-              FadeTo(@ScreenSong)
-            else
-            begin
-              ScreenName.Goto_SingScreen := false;
-              FadeTo(@ScreenName, SoundLib.Start);
-            end;
-          end
-          else //show error message
-            ScreenPopupError.ShowPopup(Language.Translate('ERROR_NO_SONGS'));
-        end;
+        // The two modes share the same song catalogue and audio engine.
+        if Interaction = 0 then StartCoach(cmPlay);
 
         //Party
         if Interaction = 1 then
@@ -218,15 +203,8 @@ begin
           FadeTo(@ScreenStatMain, SoundLib.Start);
         end;
 
-        //Editor
-        if Interaction = 4 then
-        begin
-          {$IFDEF UseMIDIPort}
-          FadeTo(@ScreenEdit, SoundLib.Start);
-          {$ELSE}
-          ScreenPopupError.ShowPopup(Language.Translate('ERROR_NO_EDITOR'));
-          {$ENDIF}
-        end;
+        // Editor remains available via E; its tile is the practice entry.
+        if Interaction = 4 then StartCoach(cmPractice);
 
         //Options
         if Interaction = 5 then
@@ -296,9 +274,35 @@ begin
   AddButton(Theme.Main.ButtonAbout);
   AddButton(Theme.Main.ButtonExit);
 
+  if Length(Button[0].Text) > 0 then Button[0].Text[0].Text := Language.Translate('COACH_PLAY');
+  if Length(Button[4].Text) > 0 then Button[4].Text[0].Text := Language.Translate('COACH_PRACTICE');
   Interaction := 0;
 
   WantSoftwareRenderingMsg := Renderer.SoftwareRendering;
+end;
+
+procedure TScreenMain.StartCoach(Mode: TCoachMode);
+begin
+  if Songs.SongList.Count < 1 then
+  begin
+    ScreenPopupError.ShowPopup(Language.Translate('ERROR_NO_SONGS'));
+    Exit;
+  end;
+  CoachMode := Mode;
+  if Mode = cmPractice then Log.LogStatus('Practice selected', 'CoachMode')
+  else Log.LogStatus('Play selected', 'CoachMode');
+  CoachDelayConfirmed := false;
+  Party.bPartyGame := false;
+  ScreenSong.Mode := smNormal;
+  if Mode = cmPractice then PlayersPlay := 1
+  else if Ini.Players = 4 then PlayersPlay := 6
+  else PlayersPlay := Ini.Players+1;
+  if Ini.OnSongClick = sSelectPlayer then FadeTo(@ScreenSong)
+  else
+  begin
+    ScreenName.Goto_SingScreen := false;
+    FadeTo(@ScreenName, SoundLib.Start);
+  end;
 end;
 
 procedure TScreenMain.OnShow;
@@ -308,6 +312,8 @@ begin
   SoundLib.StartBgMusic;
 
   ScreenSong.Mode := smNormal;
+  CoachMode := cmPlay;
+  CoachDelayConfirmed := false;
 
   if not Help.SetHelpID(ID) then
     Log.LogWarn('No Entry for Help-ID ' + ID, 'ScreenMains');
@@ -338,6 +344,16 @@ begin
   inherited SetInteraction(Num);
   Text[TextDescription].Text     := Theme.Main.Description[Interaction];
   Text[TextDescriptionLong].Text := Theme.Main.DescriptionLong[Interaction];
+  if Interaction = 0 then
+  begin
+    Text[TextDescription].Text := Language.Translate('COACH_PLAY');
+    Text[TextDescriptionLong].Text := Language.Translate('COACH_PLAY_HELP');
+  end;
+  if Interaction = 4 then
+  begin
+    Text[TextDescription].Text := Language.Translate('COACH_PRACTICE');
+    Text[TextDescriptionLong].Text := Language.Translate('COACH_PRACTICE_HELP');
+  end;
 end;
 
 end.

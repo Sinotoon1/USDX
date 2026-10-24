@@ -129,7 +129,7 @@ class BridgeTests(unittest.TestCase):
             self.job, self.out, "a\n#BPM:1", "../歌手"
         )
         text = (target / "song.txt").read_text(encoding="utf-8")
-        self.assertEqual(sum(l.startswith("#BPM:") for l in text.splitlines()), 1)
+        self.assertEqual(sum(line.startswith("#BPM:") for line in text.splitlines()), 1)
         self.assertEqual(target.parent, self.out)
 
     def test_stem_duration_mismatch_is_rejected(self):

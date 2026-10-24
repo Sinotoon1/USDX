@@ -36,6 +36,7 @@ interface
 uses
   UAvatars,
   UCommon,
+  UCoachCore,
   UFiles,
   UGraphicClasses,
   UHookableEvent,
@@ -83,6 +84,15 @@ type
     procedure ClearLyricEngines();
     procedure CalculateStartTime;
     procedure SaveLocalScores;
+  private
+    fCoachLine, fCoachTarget, fCoachText, fCoachHelp: integer;
+    fCoachStart, fCoachEnd: double;
+    fCoachLoop: boolean;
+    fCoachTick: cardinal;
+    fCoachGate: TCoachGate;
+    procedure CoachPhrase(Offset: integer);
+    procedure CoachUpdate;
+    procedure CoachDraw;
   public
     CheckPlayerConfigOnNextSong: boolean;
     eSongLoaded: THookableEvent; //< event is called after lyrics of a song are loaded on OnShow
@@ -241,6 +251,20 @@ begin
     SDL_ModState := SDL_GetModState and (KMOD_LSHIFT + KMOD_RSHIFT
     + KMOD_LCTRL + KMOD_RCTRL + KMOD_LALT  + KMOD_RALT);
 
+    if CoachMode = cmPractice then
+    begin
+      case PressedKey of
+        SDLK_F1: begin CoachPhrase(-1); Exit; end;
+        SDLK_F2: begin CoachPhrase(1); Exit; end;
+        SDLK_F3: begin CoachPhrase(0); Exit; end;
+        SDLK_F4: begin fCoachLoop := not fCoachLoop; Exit; end;
+        SDLK_F8: begin
+          CoachDelayConfirmed := not CoachDelayConfirmed;
+          fCoachGate.Reset;
+          Exit;
+        end;
+      end;
+    end;
     // check normal keys
     case PressedKey of
       SDLK_Q:
@@ -673,6 +697,10 @@ begin
   BackgroundAspectCorrection := acoLetterBox;
 
   ClearSettings;
+  fCoachHelp := AddText(30, 15, 0, 0, 13, 1, 1, 1, '');
+  fCoachText := AddText(30, 40, 0, 0, 21, 1, 1, 1, '');
+  Text[fCoachHelp].Visible := false;
+  Text[fCoachText].Visible := false;
 end;
 
 destructor TScreenSingController.Destroy;
@@ -712,6 +740,7 @@ begin
   Party.CallBeforeSing;
 
   // prepare players
+  if CoachMode = cmPractice then PlayersPlay := 1;
   SetLength(Player, PlayersPlay);
 
   //Reset Player Medley stats
@@ -937,6 +966,18 @@ begin
   // start timer
   CountSkipTimeSet;
 
+  fCoachGate.Reset;
+  fCoachLine := 0;
+  fCoachLoop := true;
+  fCoachTick := 0;
+  fCoachTarget := -1;
+  CoachDelayConfirmed := false;
+  if CoachMode = cmPractice then
+  begin
+    Settings.ScoresVisible := false;
+    CoachPhrase(0);
+    if CurrentSong.Karaoke.IsSet then AudioPlayback.ToggleKaraoke;
+  end;
 end;
 
 procedure TScreenSingController.SongError();
@@ -1585,7 +1626,124 @@ begin
   Text[screenSingViewRef.TextP5DuetSixP].Visible   := V5DuetSixP and ScreenSing.Settings.AvatarsVisible;
   Text[screenSingViewRef.TextP6DuetSixP].Visible   := V6DuetSixP and ScreenSing.Settings.AvatarsVisible;
 
+  if (CoachMode = cmPractice) and ShowFinish and not FadeOut then CoachUpdate;
   Result := screenSingViewRef.Draw();
+  CoachDraw;
+end;
+
+procedure TScreenSingController.CoachPhrase(Offset: integer);
+var I: integer; Line: PLine;
+begin
+  if Length(CurrentSong.Tracks) = 0 then Exit;
+  if Length(CurrentSong.Tracks[0].Lines) = 0 then Exit;
+  fCoachLine := Max(0, Min(High(CurrentSong.Tracks[0].Lines), fCoachLine+Offset));
+  Line := @CurrentSong.Tracks[0].Lines[fCoachLine];
+  if Length(Line.Notes) = 0 then Exit;
+  fCoachStart := Max(0, GetTimeFromBeat(Line.Notes[0].StartBeat)-0.5);
+  fCoachEnd := Min(AudioPlayback.Length,
+    GetTimeFromBeat(Line.Notes[High(Line.Notes)].StartBeat+
+      Line.Notes[High(Line.Notes)].Duration)+0.3);
+  AudioPlayback.SetPosition(fCoachStart);
+  LyricsState.SetCurrentTime(fCoachStart);
+  LyricsState.UpdateBeats;
+  ClearLyricEngines;
+  ResetLinesAndLyrics;
+  for I := 0 to High(Player) do
+  begin
+    Player[I].ResetScores;
+    SetLength(Player[I].Note, 0);
+    Player[I].HighNote := -1;
+  end;
+  SungToEnd := false;
+  Settings.Finish := false;
+  fCountIn := false;
+  fCoachGate.Reset;
+  fCoachTarget := -1;
+end;
+
+procedure TScreenSingController.CoachUpdate;
+var I: integer; Line: PLine; Sound: TCaptureBuffer;
+    Time, StartTime, EndTime, Cents, TargetHz: double;
+    Hint: TCoachHint;
+begin
+  if Paused then
+  begin
+    fCoachGate.Reset;
+    Text[fCoachText].Text := Language.Translate('COACH_WAIT');
+    Exit;
+  end;
+  if fCoachLoop and (fCoachEnd > fCoachStart) and
+     (LyricsState.GetCurrentTime >= fCoachEnd) then CoachPhrase(0);
+  if Length(AudioInputProcessor.Sound) = 0 then Exit;
+  Sound := AudioInputProcessor.Sound[0];
+  if not Assigned(Sound) then Exit;
+  if Sound.CoachPitchTick = fCoachTick then Exit;
+  fCoachTick := Sound.CoachPitchTick;
+  Text[fCoachText].Text := Language.Translate('COACH_WAIT');
+  if not Sound.CoachPitch.Valid then begin fCoachGate.Reset; Exit; end;
+  Text[fCoachText].Text := Format('%.1f Hz', [Sound.CoachPitch.Hz]);
+  if not CurrentSong.CoachReferenceReviewed then
+  begin
+    Text[fCoachText].Text := Text[fCoachText].Text+' | '+Language.Translate('COACH_AUTO');
+    fCoachGate.Reset; Exit;
+  end;
+  if not CoachDelayConfirmed then
+  begin
+    Text[fCoachText].Text := Text[fCoachText].Text+' | '+Language.Translate('COACH_DELAY');
+    fCoachGate.Reset; Exit;
+  end;
+  Time := LyricsState.GetCurrentTime-Ini.MicDelay/1000-
+    Sound.AnalysisBufferSize/(2*Sound.AudioFormat.SampleRate);
+  Line := @CurrentSong.Tracks[0].Lines[fCoachLine];
+  for I := 0 to High(Line.Notes) do
+  begin
+    StartTime := GetTimeFromBeat(Line.Notes[I].StartBeat);
+    EndTime := GetTimeFromBeat(Line.Notes[I].StartBeat+Line.Notes[I].Duration);
+    if (Time >= StartTime+0.09) and (Time < EndTime-0.09) and
+       (Line.Notes[I].NoteType in [ntNormal, ntGolden]) then
+    begin
+      if fCoachTarget <> I then fCoachGate.Reset;
+      fCoachTarget := I;
+      TargetHz := 440*Power(2, (Line.Notes[I].Tone-9)/12);
+      Cents := 1200*Log2(Sound.CoachPitch.Hz/TargetHz);
+      Hint := fCoachGate.Update(fCoachTick, Cents, true);
+      case Hint of
+        chFlat: Text[fCoachText].Text := Language.Translate('COACH_FLAT');
+        chSharp: Text[fCoachText].Text := Language.Translate('COACH_SHARP');
+        chClose: Text[fCoachText].Text := Language.Translate('COACH_CLOSE');
+        else Exit;
+      end;
+      Text[fCoachText].Text := Text[fCoachText].Text+' ';
+      if fCoachGate.MedianCents >= 0 then Text[fCoachText].Text := Text[fCoachText].Text+'+';
+      Text[fCoachText].Text := Text[fCoachText].Text+
+        Format('%.0f cents | %.1f Hz', [fCoachGate.MedianCents, Sound.CoachPitch.Hz]);
+      Exit;
+    end;
+  end;
+  fCoachGate.Reset;
+  fCoachTarget := -1;
+end;
+
+procedure TScreenSingController.CoachDraw;
+begin
+  if CoachMode = cmPractice then
+    Text[fCoachHelp].Text := Format(Language.Translate('COACH_KEYS'),
+      [fCoachLine+1, Ini.MicDelay, BoolToStr(fCoachLoop, true)])
+  else
+  begin
+    Text[fCoachHelp].Text := Language.Translate('COACH_PLAY');
+    if not CurrentSong.CoachReferenceReviewed then
+      Text[fCoachHelp].Text := Text[fCoachHelp].Text+' | '+Language.Translate('COACH_AUTO');
+  end;
+  Text[fCoachHelp].Visible := true;
+  Text[fCoachHelp].Draw;
+  Text[fCoachHelp].Visible := false;
+  if CoachMode = cmPractice then
+  begin
+    Text[fCoachText].Visible := true;
+    Text[fCoachText].Draw;
+    Text[fCoachText].Visible := false;
+  end;
 end;
 
 function TScreenSingController.FinishedMusic: boolean;
@@ -1604,7 +1762,8 @@ begin
   AudioPlayback.Stop;
   AudioPlayback.SetSyncSource(nil);
 
-  if (ScreenSong.Mode = smNormal) and SungToEnd then
+  if CoachMaySaveScores(CoachMode, CurrentSong.CoachReferenceReviewed) and
+     (ScreenSong.Mode = smNormal) and SungToEnd then
   begin
     SaveLocalScores;
 
@@ -1634,6 +1793,12 @@ begin
   end;
 
   SetFontItalic(false);
+  if CoachMode = cmPractice then
+  begin
+    FadeOut := true;
+    FadeTo(@ScreenSong);
+    Exit;
+  end;
 
   if ScreenSong.Mode = smMedley then
   begin
