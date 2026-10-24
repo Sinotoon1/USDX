@@ -1,0 +1,59 @@
+name: Coach Windows portable
+on:
+  push:
+    branches: [feature/practice-play-python]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v6
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MSYS
+          install: autoconf-wrapper automake-wrapper git make pkgconf mingw-w64-x86_64-gcc mingw-w64-x86_64-tools
+      - name: Install upstream Free Pascal toolchain
+        shell: pwsh
+        run: |
+          curl.exe -fL --retry 3 -o fpc.exe https://sourceforge.net/projects/freepascal/files/Win32/3.2.2/fpc-3.2.2.win32.and.win64.exe/download
+          if ($LASTEXITCODE -ne 0) { throw 'FPC download failed' }
+          $p = Start-Process -FilePath "$pwd/fpc.exe" -ArgumentList '/TYPE=full /VERYSILENT /SP- /SUPPRESSMSGBOXES /NORESTART' -WindowStyle Hidden -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw 'FPC installation failed' }
+      - name: Bridge and native core tests
+        shell: pwsh
+        run: |
+          python -m unittest discover -s test/coach -p 'test_*.py' -v
+          if ($LASTEXITCODE -ne 0) { throw 'Bridge tests failed' }
+          New-Item -ItemType Directory -Path coach-test-bin -Force
+          & C:/FPC/3.2.2/bin/i386-win32/fpc.exe -Twin64 -Px86_64 -Fusrc/base -FUcoach-test-bin -FEcoach-test-bin test/coach/coach_core_test.pas
+          if ($LASTEXITCODE -ne 0) { throw 'Core compile failed' }
+          ./coach-test-bin/coach_core_test.exe
+          if ($LASTEXITCODE -ne 0) { throw 'Core tests failed' }
+      - name: Upstream runtime DLLs
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python dldlls.py
+          if ($LASTEXITCODE -ne 0) { throw 'DLL download failed' }
+          7z x -y usdx-dlls-x86_64.zip -ogame '*.dll'
+          7z x -y usdx-dlls-x86_64.zip -osrc config-win.inc
+      - name: Compile native dual-mode game
+        shell: msys2 {0}
+        run: |
+          export PATH="/usr/bin:/mingw64/bin:/c/FPC/3.2.2/bin:/c/FPC/3.2.2/bin/i386-win32:$PATH"
+          export MAKE=/usr/bin/make
+          export FPCCFG=/c/FPC/3.2.2/bin/i386-win32/fpc.cfg
+          export FPCDIR=/c/FPC/3.2.2
+          export FPCMAKE=/c/FPC/3.2.2/bin/i386-win32/fpcmake
+          ./autogen.sh && ./configure && make
+      - uses: actions/upload-artifact@v6
+        with:
+          name: USDX-Coach-windows-portable
+          path: |
+            game/
+            tools/coach_bridge.py
+            docs/coach-quickstart.zh-CN.md
+          if-no-files-found: error
