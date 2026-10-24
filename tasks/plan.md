@@ -1,5 +1,9 @@
 # Studio UI 重写计划
 
+## 音乐导入生成库（2026-10-24）
+规格：`SPEC-coach-import.md`。先实现可测的 Python 任务协议与原子确认入库，
+再接原生页面/非阻塞控制器/增量曲库，最后跑真实处理、原生交互与 Win64 交付。
+
 ## MiHome-Windows 风格迭代（2026-10-24）
 规格：`SPEC-ui-mihome.md`。顺序：固定参考与原组件离屏检查 → 当前 Studio
 基线与哈希备份 → 新契约 RED → token / 等宽卡片 / 原生 Action 标记 →
