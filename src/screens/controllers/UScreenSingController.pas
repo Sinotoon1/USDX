@@ -257,6 +257,7 @@ begin
         SDLK_F1: begin CoachPhrase(-1); Exit; end;
         SDLK_F2: begin CoachPhrase(1); Exit; end;
         SDLK_F3: begin CoachPhrase(0); Exit; end;
+        SDLK_R: begin CoachPhrase(0); Exit; end;
         SDLK_F4: begin fCoachLoop := not fCoachLoop; Exit; end;
         SDLK_F8: begin
           CoachDelayConfirmed := not CoachDelayConfirmed;
@@ -975,6 +976,7 @@ begin
   if CoachMode = cmPractice then
   begin
     Settings.ScoresVisible := false;
+    Text[fCoachText].Text := Language.Translate('COACH_WAIT');
     CoachPhrase(0);
     if CurrentSong.Karaoke.IsSet then AudioPlayback.ToggleKaraoke;
   end;
@@ -1643,6 +1645,8 @@ begin
   fCoachEnd := Min(AudioPlayback.Length,
     GetTimeFromBeat(Line.Notes[High(Line.Notes)].StartBeat+
       Line.Notes[High(Line.Notes)].Duration)+0.3);
+  Log.LogStatus(Format('line=%d start=%.3f end=%.3f',
+    [fCoachLine+1, fCoachStart, fCoachEnd]), 'CoachPhrase');
   AudioPlayback.SetPosition(fCoachStart);
   LyricsState.SetCurrentTime(fCoachStart);
   LyricsState.UpdateBeats;
@@ -1680,6 +1684,8 @@ begin
   if Sound.CoachPitchTick = fCoachTick then Exit;
   fCoachTick := Sound.CoachPitchTick;
   Text[fCoachText].Text := Language.Translate('COACH_WAIT');
+  if not CurrentSong.CoachReferenceReviewed then
+    Text[fCoachText].Text := Language.Translate('COACH_AUTO');
   if not Sound.CoachPitch.Valid then begin fCoachGate.Reset; Exit; end;
   Text[fCoachText].Text := Format('%.1f Hz', [Sound.CoachPitch.Hz]);
   if not CurrentSong.CoachReferenceReviewed then
@@ -1700,6 +1706,7 @@ begin
     StartTime := GetTimeFromBeat(Line.Notes[I].StartBeat);
     EndTime := GetTimeFromBeat(Line.Notes[I].StartBeat+Line.Notes[I].Duration);
     if (Time >= StartTime+0.09) and (Time < EndTime-0.09) and
+       (Line.Notes[I].Tone >= -24) and (Line.Notes[I].Tone <= 25) and
        (Line.Notes[I].NoteType in [ntNormal, ntGolden]) then
     begin
       if fCoachTarget <> I then fCoachGate.Reset;

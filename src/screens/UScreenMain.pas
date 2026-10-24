@@ -173,18 +173,8 @@ begin
         // The two modes share the same song catalogue and audio engine.
         if Interaction = 0 then StartCoach(cmPlay);
 
-        //Party
-        if Interaction = 1 then
-        begin
-          if (Songs.SongList.Count >= 1) then
-          begin
-            Party.bPartyGame := true;
-
-            FadeTo(@ScreenPartyOptions, SoundLib.Start);
-          end
-          else //show error message, No Songs Loaded
-            ScreenPopupError.ShowPopup(Language.Translate('ERROR_NO_SONGS'));
-        end;
+        // First-class practice entry; Party remains on the P shortcut.
+        if Interaction = 1 then StartCoach(cmPractice);
 
         //Jukebox
         if Interaction = 2 then
@@ -203,8 +193,15 @@ begin
           FadeTo(@ScreenStatMain, SoundLib.Start);
         end;
 
-        // Editor remains available via E; its tile is the practice entry.
-        if Interaction = 4 then StartCoach(cmPractice);
+        //Editor
+        if Interaction = 4 then
+        begin
+          {$IFDEF UseMIDIPort}
+          FadeTo(@ScreenEdit, SoundLib.Start);
+          {$ELSE}
+          ScreenPopupError.ShowPopup(Language.Translate('ERROR_NO_EDITOR'));
+          {$ENDIF}
+        end;
 
         //Options
         if Interaction = 5 then
@@ -275,7 +272,7 @@ begin
   AddButton(Theme.Main.ButtonExit);
 
   if Length(Button[0].Text) > 0 then Button[0].Text[0].Text := Language.Translate('COACH_PLAY');
-  if Length(Button[4].Text) > 0 then Button[4].Text[0].Text := Language.Translate('COACH_PRACTICE');
+  if Length(Button[1].Text) > 0 then Button[1].Text[0].Text := Language.Translate('COACH_PRACTICE');
   Interaction := 0;
 
   WantSoftwareRenderingMsg := Renderer.SoftwareRendering;
@@ -349,7 +346,7 @@ begin
     Text[TextDescription].Text := Language.Translate('COACH_PLAY');
     Text[TextDescriptionLong].Text := Language.Translate('COACH_PLAY_HELP');
   end;
-  if Interaction = 4 then
+  if Interaction = 1 then
   begin
     Text[TextDescription].Text := Language.Translate('COACH_PRACTICE');
     Text[TextDescriptionLong].Text := Language.Translate('COACH_PRACTICE_HELP');

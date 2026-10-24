@@ -55,5 +55,6 @@ jobs:
           path: |
             game/
             tools/coach_bridge.py
+            tools/prepare-coach-song.ps1
             docs/coach-quickstart.zh-CN.md
           if-no-files-found: error
