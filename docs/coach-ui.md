@@ -10,8 +10,9 @@ Modern remain selectable and retain their legacy renderer/input behavior.
 All Studio surfaces are light, including practice and play: cool gray
 canvas, white panels, dark text and teal focus/action accents. Song
 covers, avatars and optional song video remain real content, not theme chrome.
-The home screen has two mode entries and direct library, statistics, editor and
-settings actions. Player initialization is retained before entering songs.
+The home screen has two mode entries and direct library, statistics, editor,
+settings and music-import actions. Player initialization is retained before
+entering songs.
 
 List interaction is explicit: hover does not change selection; click selects;
 double-click the selected row within 350ms or press Enter to start. Blank space,
@@ -91,12 +92,47 @@ help without a Chinese page retains the original English fallback.
 
 ## Audio invariants
 
-This UI change does not alter Python separation/reference models, capture,
+This UI does not alter Python separation/reference models, capture,
 confidence gating, target matching, scoring rules or persistent-score isolation.
 F8 confirms a **previously measured** MicDelay for this session; it does not
 measure latency. An AUTO/unreviewed reference still suppresses precise direction
 and persistent high scores. Test fixtures and screenshots do not establish
 physical microphone or end-to-end latency accuracy.
+
+## Native music import
+
+Home's Import button/F7 opens `UScreenCoachImport`; file drop is accepted only
+on home/import without a modal/transition. Windows has a native Unicode file
+picker; paste/drop also work. The import form reuses semantic tokens, rounded
+panels, shared buttons and reduced-motion behavior, at both native canvas sizes.
+
+`UCoachImport` starts `tools/coach_import.py` asynchronously, without a shell.
+Windows uses `CreateProcessW`, tested argument quoting and a UTF-8 JSON metadata
+request; POSIX uses `TProcess.Parameters`. The game polls schema-versioned atomic
+snapshots at 250ms intervals. Reference previews contain at most 512 actual notes;
+the overview is sampled, while the exported reference retains the complete data.
+No invented percentage or model work runs on the render thread.
+
+The form delivers the complete SDL text-input commit for Chinese IMEs; clipboard
+shortcuts use the key event's modifier bits, not the already-released global
+keyboard state. Clicking another action commits/blurs the current metadata box.
+Selecting a new file clears the previous preview, audition and confirmation.
+
+The worker adapts the existing `SongStore`/`ReferenceService`, reuses verified
+source/reference hashes and owns a cancellable model child. Native import workers
+are serialized per data directory. Do not simultaneously modify the same
+reference in the separate Python web app; that app does not share this lock.
+Audition enables, but does not itself perform, explicit reference confirmation.
+Publish revalidates artifacts and atomically exports through `coach_bridge`.
+Existing different/corrupt packs are not overwritten. Only a successfully
+published song is incrementally added to the catalogue; full-path deduplication
+avoids appending the whole library again.
+
+Rebuilding catalogue cover buttons must free old entries/interactions and reset
+`ButtonPos := -1` before `GenerateThumbnails`. Reusing the old reserved cursor
+causes a range error even when the new song itself has loaded correctly.
+See [coach-import-validation.md](coach-import-validation.md) for the protocol,
+runtime checks, paths and reproducible maintenance workflow.
 
 ## Verification and maintenance
 
@@ -106,9 +142,9 @@ python -m unittest discover -s test/coach -p 'test_*.py' -v
 fpc -Cr -Co -Ct -Fusrc/base -FU<test-output> -FE<test-output> test/coach/coach_motion_test.pas
 ```
 
-Native tests also include coach_core, coach_window and coach_unicode (compile the
+Native tests also include coach_core, coach_window, coach_import and coach_unicode (compile the
 vendored unicode unit without globally forcing Delphi mode). The Windows
-portable workflow runs all four and builds the complete game/resource package.
+portable workflow runs all five and builds the complete game/resource package.
 
 Native acceptance uses an isolated SDL/Xvfb display and a zero-sample virtual
 input, never the user's config or real microphone. Check home/profile/library,
