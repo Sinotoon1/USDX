@@ -8,6 +8,13 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class ImportNativeContracts(unittest.TestCase):
+    def test_studio_continuations_keep_note_timing_without_literal_tilde_lyrics(self):
+        source = (ROOT / "src/base/ULyrics.pas").read_text(encoding="utf-8")
+        self.assertIn(
+            "Theme.Studio.Enabled and (LyricLine.Words[NoteIndex].Text = '~')", source
+        )
+        self.assertIn("LyricLine.Words[NoteIndex].Text := ''", source)
+
     def test_ready_lyrics_are_visible_and_freestyle_is_not_a_pitch_target(self):
         screen = (ROOT / "src/screens/UScreenCoachImport.pas").read_text(
             encoding="utf-8"

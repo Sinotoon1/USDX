@@ -323,6 +323,9 @@ begin
       LyricLine.Words[NoteIndex].Start     := Line.Notes[NoteIndex].StartBeat;
       LyricLine.Words[NoteIndex].Length    := Line.Notes[NoteIndex].Duration;
       LyricLine.Words[NoteIndex].Text      := Line.Notes[NoteIndex].Text;
+      // Keep melisma notes/timing, not their file-format continuation glyph.
+      if Theme.Studio.Enabled and (LyricLine.Words[NoteIndex].Text = '~') then
+        LyricLine.Words[NoteIndex].Text := '';
       LyricLine.Words[NoteIndex].Freestyle := Line.Notes[NoteIndex].NoteType = ntFreestyle;
 
       LyricLine.Text := LyricLine.Text + LyricLine.Words[NoteIndex].Text;
