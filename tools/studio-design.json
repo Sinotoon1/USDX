@@ -174,7 +174,51 @@
       272
     ],
     "secondaryColumns": 2,
-    "secondaryGap": 16
+    "secondaryGap": 16,
+    "import": {
+      "file": [
+        40,
+        152,
+        720,
+        44
+      ],
+      "title": [
+        40,
+        232,
+        440,
+        40
+      ],
+      "artist": [
+        496,
+        232,
+        264,
+        40
+      ],
+      "analyze": [
+        40,
+        508,
+        168,
+        40
+      ],
+      "listen": [
+        224,
+        508,
+        144,
+        40
+      ],
+      "publish": [
+        384,
+        508,
+        184,
+        40
+      ],
+      "back": [
+        592,
+        508,
+        168,
+        40
+      ]
+    }
   },
   "copy": {
     "STUDIO_BRAND": [
@@ -210,8 +254,8 @@
       "F5  Start playing"
     ],
     "STUDIO_IMPORT": [
-      "歌曲导入 · 在 Python 教唱程序完成预处理后导出歌包。",
-      "Import songs from the Python coach after vocal separation and pitch review."
+      "F7 导入音乐 · 提取人声与参考音高，试听确认后一键加入曲库。",
+      "F7 Import music · Separate vocals, review pitch and add to the library."
     ],
     "STUDIO_LIBRARY": [
       "我的曲库",
@@ -292,6 +336,166 @@
     "STUDIO_TOOL_OPTIONS": [
       "声音、显示与麦克风",
       "Audio, display and microphone"
+    ],
+    "IMPORT_ENTRY": [
+      "导入音乐  F7",
+      "Import music  F7"
+    ],
+    "IMPORT_TITLE": [
+      "导入音乐",
+      "Import music"
+    ],
+    "IMPORT_HINT": [
+      "选择本地音频 → 提取人声与参考音高 → 试听确认 → 加入曲库",
+      "Choose audio → Separate and analyze → Listen and confirm → Add to library"
+    ],
+    "IMPORT_FILE": [
+      "选择音乐文件 · 或 Ctrl+V 粘贴路径 / 拖入文件",
+      "Choose audio · or paste a file path / drop a file"
+    ],
+    "IMPORT_NAME": [
+      "歌曲名称",
+      "Song title"
+    ],
+    "IMPORT_ARTIST": [
+      "歌手",
+      "Artist"
+    ],
+    "IMPORT_ANALYZE": [
+      "开始处理",
+      "Build reference"
+    ],
+    "IMPORT_LISTEN": [
+      "试听人声",
+      "Listen to vocals"
+    ],
+    "IMPORT_STOP": [
+      "停止试听",
+      "Stop preview"
+    ],
+    "IMPORT_PUBLISH": [
+      "确认参考并入库",
+      "Confirm and add"
+    ],
+    "IMPORT_BACK": [
+      "返回",
+      "Back"
+    ],
+    "IMPORT_CANCEL": [
+      "取消处理",
+      "Cancel processing"
+    ],
+    "IMPORT_CANCELLING": [
+      "正在取消处理…",
+      "Cancelling…"
+    ],
+    "IMPORT_LIBRARY": [
+      "进入曲库",
+      "Open library"
+    ],
+    "IMPORT_IDLE": [
+      "准备导入音乐",
+      "Ready to import"
+    ],
+    "IMPORT_IDLE_HINT": [
+      "支持 WAV、MP3、M4A、FLAC、OGG、AAC；最长 10 分钟。",
+      "WAV, MP3, M4A, FLAC, OGG and AAC; up to 10 minutes."
+    ],
+    "IMPORT_STARTING": [
+      "正在启动处理引擎…",
+      "Starting the local engine…"
+    ],
+    "IMPORT_IMPORTING": [
+      "正在导入音频…",
+      "Importing audio…"
+    ],
+    "IMPORT_SEPARATING": [
+      "正在提取人声与伴奏…",
+      "Separating vocals and accompaniment…"
+    ],
+    "IMPORT_PITCH": [
+      "正在识别主唱参考音高…",
+      "Identifying the lead-vocal reference pitch…"
+    ],
+    "IMPORT_RUNNING_HINT": [
+      "后台处理中，当前页面保持响应；可随时取消。首次使用可能需要下载模型。",
+      "Working in the background. You may cancel. First use may download a model."
+    ],
+    "IMPORT_READY": [
+      "参考已生成，等待试听确认",
+      "Reference ready — listen and review"
+    ],
+    "IMPORT_READY_HINT": [
+      "请试听主唱并核对下方曲线；确认旋律一致后点击「确认参考并入库」。",
+      "Listen and check the curve, then confirm that it matches the lead melody."
+    ],
+    "IMPORT_SUMMARY": [
+      "时长 %.1f 秒 · %d 个候选音符 · 有声音高覆盖 %.0f%%",
+      "%.1f sec · %d candidate notes · %.0f%% voiced coverage"
+    ],
+    "IMPORT_PUBLISHING": [
+      "正在生成歌包并加入曲库…",
+      "Building the song pack…"
+    ],
+    "IMPORT_DONE": [
+      "歌曲已加入曲库",
+      "Song added to your library"
+    ],
+    "IMPORT_DONE_HINT": [
+      "人声、伴奏与参考音高已保存；歌词暂用 la 音节，后续可编辑。",
+      "Vocals, backing and pitch saved. Lyrics use editable la syllables."
+    ],
+    "IMPORT_FAILED": [
+      "处理未完成",
+      "Processing did not complete"
+    ],
+    "IMPORT_CANCELLED": [
+      "处理已取消",
+      "Processing cancelled"
+    ],
+    "IMPORT_RETRY_HINT": [
+      "原文件和已有歌曲保持不变，可重新选择文件或重试。",
+      "Original audio and existing songs are unchanged. Choose a file or retry."
+    ],
+    "IMPORT_CURVE": [
+      "参考音高概览 · 自动候选",
+      "Reference pitch overview · automatic candidates"
+    ],
+    "IMPORT_EMPTY_CURVE": [
+      "处理完成后在此显示参考音高",
+      "Reference notes will appear here"
+    ],
+    "IMPORT_ERROR_ENGINE_MISSING": [
+      "未找到处理引擎。请将 Python 教唱程序放在相邻目录，或设置 USDX_COACH_ROOT。",
+      "Engine not found. Place the Python coach beside USDX or set USDX_COACH_ROOT."
+    ],
+    "IMPORT_ERROR_UNSUPPORTED_AUDIO": [
+      "请选择支持的本地音频文件。",
+      "Choose a supported local audio file."
+    ],
+    "IMPORT_ERROR_CHOOSE_OR_PASTE": [
+      "可用 Ctrl+V 粘贴音乐文件完整路径，或将文件拖入此页面。",
+      "Paste a complete audio path with Ctrl+V, or drop a file onto this page."
+    ],
+    "IMPORT_ERROR_AUDIO_RUNTIME_MISSING": [
+      "音频环境尚未就绪，请在 Python 教唱程序运行 setup_audio.ps1。",
+      "Run setup_audio.ps1 in the Python coach to prepare its audio runtime."
+    ],
+    "IMPORT_ERROR_SONG_PACK_EXISTS": [
+      "同一参考的歌包已存在且内容不同，现有歌曲已保留。",
+      "A different pack already exists for this reference. It was preserved."
+    ],
+    "IMPORT_ERROR_GENERIC": [
+      "处理失败，可重试。详情：",
+      "Processing failed. You can retry. Details:"
+    ],
+    "IMPORT_LIBRARY_FAILED": [
+      "歌包已生成，曲库加载未完成；请返回后重新打开曲库。",
+      "Song pack saved, but library loading did not finish. Reopen the library."
+    ],
+    "STUDIO_NO_SONGS": [
+      "曲库为空。\n按 F7 导入音乐并生成歌曲。",
+      "Your library is empty.\nPress F7 to import music and build a song."
     ]
   },
   "reference": {

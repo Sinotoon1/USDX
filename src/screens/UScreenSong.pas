@@ -262,6 +262,7 @@ type
       procedure CloseMessage();
 
       procedure GenerateThumbnails();
+      procedure RebuildImportedCatalogue;
       procedure SyncCoversToSongs();
       procedure OnShow; override;
       procedure CancelPointerInput; override;
@@ -2140,6 +2141,17 @@ begin
   end;
 end;
 
+procedure TScreenSong.RebuildImportedCatalogue;
+var I: integer;
+begin
+  CancelPointerInput;
+  for I := 0 to High(Button) do Button[I].Free;
+  SetLength(Button, 0);
+  SetLength(Interactions, 0);
+  ButtonPos := -1;
+  GenerateThumbnails;
+end;
+
 procedure TScreenSong.GenerateThumbnails();
 var
   I: integer;
@@ -2180,6 +2192,7 @@ begin
       CoverFile := Skin.GetTextureFileName('SongCover');
 
     CoverButton.Texture.Name := CoverFile;
+    Song.CoverTex.Free;
     Song.CoverTex := CoverButton.Texture.Clone();
     CoverButton.Selected := False;
   end;

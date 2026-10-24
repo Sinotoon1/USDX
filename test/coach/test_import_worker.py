@@ -5,7 +5,6 @@ import json
 import subprocess
 import sys
 import tempfile
-import threading
 import unittest
 import wave
 from pathlib import Path
@@ -219,6 +218,44 @@ class ImportTests(unittest.TestCase):
         self.assertEqual(
             "engine_missing", self.worker.read_state(self.state)["error_code"]
         )
+
+    def test_native_json_request_preserves_unicode_and_quotes(self):
+        self.prepare()
+        request = self.root / "请求.json"
+        self.worker.save_state(
+            request,
+            {"title": '中文 "歌曲"', "artist": "歌 手", "confirmation": "revision"},
+        )
+        args = [
+            "coach_import.py",
+            "publish",
+            "--coach-root",
+            str(self.root),
+            "--state",
+            str(self.state),
+            "--songs-root",
+            str(self.root / "songs"),
+            "--request",
+            str(request),
+        ]
+        with (
+            patch.object(self.worker, "CoachEngine", return_value=self.engine),
+            patch.object(sys, "argv", args),
+        ):
+            self.assertEqual(0, self.worker.main())
+        text = Path(self.worker.read_state(self.state)["song_file"]).read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('#TITLE:中文 "歌曲"', text)
+        self.assertIn("#ARTIST:歌 手", text)
+
+    def test_corrupt_published_pack_is_not_reused(self):
+        self.prepare()
+        target = Path(self.publish()["output_path"])
+        (target / "instrumental.wav").write_bytes(b"changed")
+        with self.assertRaises(FileExistsError):
+            self.publish()
+        self.assertEqual(b"changed", (target / "instrumental.wav").read_bytes())
 
 
 if __name__ == "__main__":

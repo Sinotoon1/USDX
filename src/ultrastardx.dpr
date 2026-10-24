@@ -304,6 +304,9 @@ uses
   //------------------------------
   UScreenLoading          in 'screens\UScreenLoading.pas',
   UScreenMain             in 'screens\UScreenMain.pas',
+  UScreenCoachImport      in 'screens\UScreenCoachImport.pas',
+  UCoachImport            in 'base\UCoachImport.pas',
+  UCoachImportCore        in 'base\UCoachImportCore.pas',
   UScreenName             in 'screens\UScreenName.pas',
   UScreenSong             in 'screens\UScreenSong.pas',
   UScreenSingController   in 'screens\controllers\UScreenSingController.pas',

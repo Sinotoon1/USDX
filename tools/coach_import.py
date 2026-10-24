@@ -13,7 +13,6 @@ import math
 import os
 import subprocess
 import sys
-import tempfile
 import time
 from contextlib import contextmanager
 from pathlib import Path
@@ -342,6 +341,9 @@ def main():
     parser.add_argument("--title", default="")
     parser.add_argument("--artist", default="Unknown")
     parser.add_argument("--confirm-reference", default="")
+    parser.add_argument(
+        "--request", type=Path, help="UTF-8 metadata file from the native form"
+    )
     args = parser.parse_args()
     previous = {}
     try:
@@ -354,6 +356,16 @@ def main():
             if args.action == "prepare" and args.audio:
                 prepare(args.audio, args.state, engine)
             elif args.action == "publish" and args.songs_root:
+                if args.request:
+                    form = read_state(args.request)
+                    if not all(
+                        isinstance(form.get(k), str)
+                        for k in ("title", "artist", "confirmation")
+                    ):
+                        raise ValueError("invalid_request")
+                    args.title, args.artist, args.confirm_reference = (
+                        form[k] for k in ("title", "artist", "confirmation")
+                    )
                 publish(
                     args.state,
                     args.songs_root,

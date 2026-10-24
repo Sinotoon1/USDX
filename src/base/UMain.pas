@@ -398,6 +398,24 @@ begin
   while (SDL_PollEvent(@Event) <> 0) do
   begin
     case Event.type_ of
+      SDL_DROPFILE:
+      begin
+        try
+          if (Event.drop._file <> nil) and Theme.Studio.Enabled and
+            Assigned(ScreenCoachImport) and not Assigned(Display.NextScreen) and
+            not ScreenPopupError.Visible and not ScreenPopupInfo.Visible and
+            not ScreenPopupCheck.Visible and not ScreenPopupHelp.Visible then
+          begin
+            if Display.CurrentScreen^ = ScreenMain then
+            begin
+              ScreenCoachImport.SetAudioFile(UTF8String(Event.drop._file));
+              ScreenMain.FadeTo(@ScreenCoachImport);
+            end
+            else if Display.CurrentScreen^ = ScreenCoachImport then
+              ScreenCoachImport.SetAudioFile(UTF8String(Event.drop._file));
+          end;
+        finally SDL_free(Event.drop._file); end;
+      end;
       SDL_QUITEV:
       begin
         Display.Fade := 0;
@@ -530,6 +548,12 @@ begin
           if not Assigned(Display.NextScreen) then
           begin //drop input when changing screens
             KeyCharUnicode:=0;
+            if (Event.type_ = SDL_TEXTINPUT) and Assigned(ScreenCoachImport) and
+              (Display.CurrentScreen^ = ScreenCoachImport) then
+            begin
+              ScreenCoachImport.InsertText(UTF8String(Event.text.text));
+              Continue;
+            end;
             if (Event.type_ = SDL_TEXTINPUT) and (Event.text.text <> '') then
             try
               KeyCharUnicode:=UnicodeStringToUCS4String(UnicodeString(UTF8String(Event.text.text)))[0];

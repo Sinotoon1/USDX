@@ -96,6 +96,10 @@ begin
     case PressedKey of
       SDLK_F6: begin StartCoach(cmPractice); Exit; end;
       SDLK_F5: begin StartCoach(cmPlay); Exit; end;
+      SDLK_F7: begin
+        if Theme.Studio.Enabled then FadeTo(@ScreenCoachImport, SoundLib.Start);
+        Exit;
+      end;
       SDLK_S: begin
         StartCoach(cmPlay);
         Exit;
@@ -220,6 +224,8 @@ begin
         begin
           Result := false;
         end;
+        if (Interaction = 8) and Theme.Studio.Enabled then
+          FadeTo(@ScreenCoachImport, SoundLib.Start);
       end;
       {**
        * Up and Down could be done at the same time,
@@ -270,6 +276,7 @@ begin
   AddButton(Theme.Main.ButtonOptions);
   AddButton(Theme.Main.ButtonAbout);
   AddButton(Theme.Main.ButtonExit);
+  if Theme.Studio.Enabled then AddButton(Theme.Main.ButtonImport);
 
   if Length(Button[0].Text) > 0 then Button[0].Text[0].Text := Language.Translate('COACH_PLAY');
   if Length(Button[1].Text) > 0 then Button[1].Text[0].Text := Language.Translate('COACH_PRACTICE');
@@ -282,7 +289,8 @@ procedure TScreenMain.StartCoach(Mode: TCoachMode);
 begin
   if Songs.SongList.Count < 1 then
   begin
-    ScreenPopupError.ShowPopup(Language.Translate('COACH_NO_SONGS'));
+    if Theme.Studio.Enabled then ScreenPopupError.ShowPopup(Language.Translate('STUDIO_NO_SONGS'))
+    else ScreenPopupError.ShowPopup(Language.Translate('COACH_NO_SONGS'));
     Exit;
   end;
   CoachMode := Mode;
@@ -339,6 +347,12 @@ end;
 procedure TScreenMain.SetInteraction(Num: integer);
 begin
   inherited SetInteraction(Num);
+  if Num = 8 then
+  begin
+    Text[TextDescription].Text := Language.Translate('IMPORT_TITLE');
+    Text[TextDescriptionLong].Text := Language.Translate('IMPORT_HINT');
+    Exit;
+  end;
   Text[TextDescription].Text     := Theme.Main.Description[Interaction];
   Text[TextDescriptionLong].Text := Theme.Main.DescriptionLong[Interaction];
   if Interaction = 0 then

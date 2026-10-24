@@ -8,7 +8,8 @@
 保留现有全浅色桌面风格。原 Python 项目的算法和存储格式不改。
 
 ## 任务协议与边界
-- 原生控制器用 TProcess 参数数组启动 tools/coach_import.py，无 shell 拼接。
+- 原生控制器以参数启动 tools/coach_import.py，无 shell；Linux使用TProcess，
+  Windows使用CreateProcessW及经过测试的参数转义，元数据通过UTF-8 JSON传递。
 - worker 的 prepare/publish 子命令通过 schema_version=1 原子 JSON 状态文件
   返回 status/phase/error/job_id/stem/preview/output_path；每次任务 UUID 隔离。
 - 重模型只在子进程。prepare 可写取消标记；worker 终止并等待自己的模型子进程，

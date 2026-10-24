@@ -49,6 +49,7 @@ uses
   URenderer,
   UScreenLoading,
   UScreenMain,
+  UScreenCoachImport,
   UScreenName,
   UScreenOptions,
   UScreenOptionsGame,
@@ -137,6 +138,7 @@ var
 
   ScreenLoading:      TScreenLoading;
   ScreenMain:         TScreenMain;
+  ScreenCoachImport:  TScreenCoachImport;
   ScreenName:         TScreenName;
   ScreenSong:         TScreenSong;
   ScreenSing:         TScreenSingController;
@@ -545,6 +547,7 @@ begin
     Log.LogCritical('SDL_Init Failed', 'UGraphic.Initialize3D');
   end;
   PreInitRenderer;
+    SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
   InitializeScreen;
   InitRenderer;
   Renderer.Blend := true;
@@ -1015,6 +1018,7 @@ procedure LoadScreens(Title: string);
 begin
   SetLoadingTitle('Loading ScreenMain & ScreenName');
   ScreenMain :=             TScreenMain.Create;
+  if Theme.Studio.Enabled then ScreenCoachImport := TScreenCoachImport.Create;
   ScreenName :=             TScreenName.Create;
   SetLoadingTitle('Loading ScreenSong');
   ScreenSong :=             TScreenSong.Create;
@@ -1096,6 +1100,7 @@ end;
 procedure UnloadScreens;
 begin
   FreeAndNil(ScreenMain);
+  FreeAndNil(ScreenCoachImport);
   FreeAndNil(ScreenName);
   FreeAndNil(ScreenSong);
   //ScreenSing.Free;

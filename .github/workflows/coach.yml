@@ -39,6 +39,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'UI motion compile failed' }
           ./coach-test-bin/coach_motion_test.exe
           if ($LASTEXITCODE -ne 0) { throw 'UI motion tests failed' }
+          & C:/FPC/3.2.2/bin/i386-win32/fpc.exe -Twin64 -Px86_64 -Cr -Co -Ct -Fusrc/base -FUcoach-test-bin -FEcoach-test-bin test/coach/coach_import_test.pas
+          if ($LASTEXITCODE -ne 0) { throw 'Import core compile failed' }
+          ./coach-test-bin/coach_import_test.exe
+          if ($LASTEXITCODE -ne 0) { throw 'Import core tests failed' }
           & C:/FPC/3.2.2/bin/i386-win32/fpc.exe -Twin64 -Px86_64 -Cr -Fusrc/base -Fusrc/lib/anyascii -FUcoach-test-bin -FEcoach-test-bin test/coach/coach_unicode_test.pas
           if ($LASTEXITCODE -ne 0) { throw 'Unicode compile failed' }
           ./coach-test-bin/coach_unicode_test.exe
@@ -67,6 +71,7 @@ jobs:
           path: |
             game/
             tools/coach_bridge.py
+            tools/coach_import.py
             tools/prepare-coach-song.ps1
             docs/coach-quickstart.zh-CN.md
             docs/coach-ui.md

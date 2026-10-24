@@ -350,6 +350,78 @@ def generate():
         text(name + "Text2", 20, 36, 16, "StudioMuted", Text=hint, W=w - 40, H=24)
     button("MainButtonAbout", [592, 76, 80, 36], "SING_ABOUT", size=18)
     button("MainButtonExit", [680, 76, 80, 36], "SING_EXIT", size=18)
+    button("MainButtonImport", [408, 76, 168, 36], "IMPORT_ENTRY", True, size=18)
+
+    # Native import form. Geometry/copy remain in the same design system.
+    put("CoachImport", StudioShell=1)
+    for i, rect in enumerate(((40, 290, 720, 108), (40, 438, 720, 50)), 1):
+        x, y, w, h = rect
+        put(
+            "CoachImportStatic" + str(i),
+            X=x,
+            Y=y,
+            W=w,
+            H=h,
+            Z=0.1,
+            Tex="Rectangle",
+            Type="Transparent",
+            Flat=1,
+            Color="StudioSurface",
+            Reflection=0,
+        )
+    put(
+        "CoachImportBackground",
+        Type="Color",
+        **{
+            k: c / 255
+            for k, c in zip(("ColR", "ColG", "ColB"), design["colors"]["StudioCanvas"])
+        },
+    )
+    text("CoachImportText1", 40, 72, 32, Text="IMPORT_TITLE")
+    text(
+        "CoachImportText2", 40, 118, 18, "StudioMuted", Text="IMPORT_HINT", W=720, H=28
+    )
+    text("CoachImportText3", 40, 208, 18, Text="IMPORT_NAME")
+    text("CoachImportText4", 496, 208, 18, Text="IMPORT_ARTIST")
+    text("CoachImportText5", 40, 414, 16, "StudioMuted", Text="IMPORT_CURVE")
+    text("CoachImportTextStatus", 56, 302, 24, Text="IMPORT_IDLE", W=688, H=32)
+    text(
+        "CoachImportTextDetail",
+        56,
+        340,
+        18,
+        "StudioMuted",
+        Text="IMPORT_IDLE_HINT",
+        W=688,
+        H=48,
+    )
+    text("CoachImportTextSummary", 40, 394, 15, "StudioMuted", Text="", W=720, H=22)
+    for name, caption in (
+        ("File", "IMPORT_FILE"),
+        ("Title", ""),
+        ("Artist", ""),
+        ("Analyze", "IMPORT_ANALYZE"),
+        ("Listen", "IMPORT_LISTEN"),
+        ("Publish", "IMPORT_PUBLISH"),
+        ("Back", "IMPORT_BACK"),
+    ):
+        button(
+            "CoachImportButton" + name,
+            design["layout"]["import"][name.lower()],
+            caption,
+            name in ("Analyze", "Publish"),
+            size=20,
+        )
+        if name in ("File", "Title", "Artist"):
+            text(
+                "CoachImportButton" + name + "Text1",
+                16,
+                10 if name == "File" else 8,
+                20,
+                Text=caption,
+                W=design["layout"]["import"][name.lower()][2] - 32,
+                H=28,
+            )
     put(
         "MainButtonCollection1",
         Visible=0,
@@ -790,7 +862,7 @@ def generate():
     ]
     for name, props in sections.items():
         out.append("[" + name + "]\n")
-        out.extend(f"{k} = {v}\n" for k, v in props.items())
+        out.extend(f"{k} = {v}".rstrip() + "\n" for k, v in props.items())
         out.append("\n")
     skin = (ROOT / "game/themes/Deluxe/Blue.ini").read_text(encoding="utf-8-sig")
     skin = skin.replace("Theme=Deluxe", "Theme=Studio", 1).replace(

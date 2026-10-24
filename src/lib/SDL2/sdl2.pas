@@ -210,6 +210,9 @@ const
 {$I sdlsystem.inc}
 {$I sdl.inc}
 
+// SDL owns clipboard/drop buffers; they must use its allocator's matching free.
+procedure SDL_free(Buffer: Pointer); cdecl; external SDL_LibName;
+
 implementation
 
 //from "sdl_version.h"

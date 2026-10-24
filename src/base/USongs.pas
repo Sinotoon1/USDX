@@ -111,6 +111,7 @@ type
     destructor  Destroy(); override;
 
     procedure LoadSongList;     // load all songs
+    function AddImportedSong(const FilePath: IPath): boolean;
   procedure FindFilesByExtension(const Dir: IPath; const Ext: IPath; Recursive: Boolean; var Files: TPathDynArray);
     procedure Sort(Order: TSortingType);
     property  Processing: boolean read fProcessing;
@@ -221,7 +222,8 @@ begin
     if ((FileInfo.Attr and faDirectory) <> 0) and
        (not FileName.Equals('.')) and
        (not FileName.Equals('..')) and
-       (not FileName.Equals('')) then
+       (not FileName.Equals('')) and
+       (Pos('.coach-staging-', FileName.ToUTF8) <> 1) then
     begin
       Log.LogDebug('Recursing: ' + StartDir.Append(FileName).ToWide, 'TSongs.FindFilesByExtension');
       SubDirs := CollectDirectories(StartDir.Append(FileName), true, Owner);
@@ -342,6 +344,27 @@ begin
   end;
 end;
 
+
+function TSongs.AddImportedSong(const FilePath: IPath): boolean;
+var I, Before: integer; Existing: TSong; Absolute: IPath;
+begin
+  Result := false;
+  if Processing or (FilePath = nil) or not FilePath.Exists then Exit;
+  Absolute := FilePath.GetAbsolutePath;
+  for I := 0 to SongList.Count - 1 do
+  begin
+    Existing := TSong(SongList[I]);
+    if Existing.Path.Append(Existing.FileName).GetAbsolutePath.Equals(Absolute) then Exit(true);
+  end;
+  Before := SongList.Count;
+  LoadSongFromFile(Absolute);
+  Result := SongList.Count = Before + 1;
+  if Result then
+  begin
+    if Assigned(CatSongs) then CatSongs.Refresh;
+    if Assigned(ScreenSong) then ScreenSong.RebuildImportedCatalogue;
+  end;
+end;
 
 procedure TSongs.LoadSongList;
 begin

@@ -309,10 +309,17 @@ type
     ButtonAbout:      TThemeButton;
     ButtonExit:       TThemeButton;
 
+    ButtonImport:     TThemeButton;
+
     TextDescription:      TThemeText;
     TextDescriptionLong:  TThemeText;
     Description:          array[0..7] of UTF8String;
     DescriptionLong:      array[0..7] of UTF8String;
+  end;
+
+  TThemeCoachImport = class(TThemeBasic)
+    Buttons: array[0..6] of TThemeButton;
+    TextStatus, TextDetail, TextSummary: TThemeText;
   end;
 
   TThemeName = class(TThemeBasic)
@@ -1161,6 +1168,7 @@ type
     Themes:           array of TThemeEntry;
     Loading:          TThemeLoading;
     Main:             TThemeMain;
+    CoachImport:      TThemeCoachImport;
     CoachPanel:       TThemeStatic;
     CoachTitle, CoachStatus, CoachMetrics, CoachState, CoachHelp, CoachPlayText: TThemeText;
     CoachPauseText:    TThemeText;
@@ -1312,6 +1320,7 @@ begin
 
   Loading := TThemeLoading.Create;
   Main := TThemeMain.Create;
+  CoachImport := TThemeCoachImport.Create;
   Name := TThemeName.Create;
   Song := TThemeSong.Create;
   Sing := TThemeSing.Create;
@@ -1544,6 +1553,22 @@ begin
       ThemeLoadButton(Main.ButtonOptions, 'MainButtonOptions');
       ThemeLoadButton(Main.ButtonAbout, 'MainButtonAbout');
       ThemeLoadButton(Main.ButtonExit, 'MainButtonExit');
+
+      if Studio.Enabled then
+      begin
+        ThemeLoadButton(Main.ButtonImport, 'MainButtonImport');
+        ThemeLoadBasic(CoachImport, 'CoachImport');
+        ThemeLoadButton(CoachImport.Buttons[0], 'CoachImportButtonFile');
+        ThemeLoadButton(CoachImport.Buttons[1], 'CoachImportButtonTitle');
+        ThemeLoadButton(CoachImport.Buttons[2], 'CoachImportButtonArtist');
+        ThemeLoadButton(CoachImport.Buttons[3], 'CoachImportButtonAnalyze');
+        ThemeLoadButton(CoachImport.Buttons[4], 'CoachImportButtonListen');
+        ThemeLoadButton(CoachImport.Buttons[5], 'CoachImportButtonPublish');
+        ThemeLoadButton(CoachImport.Buttons[6], 'CoachImportButtonBack');
+        ThemeLoadText(CoachImport.TextStatus, 'CoachImportTextStatus');
+        ThemeLoadText(CoachImport.TextDetail, 'CoachImportTextDetail');
+        ThemeLoadText(CoachImport.TextSummary, 'CoachImportTextSummary');
+      end;
 
       // Shared native practice controls, also available when switching themes.
       ThemeLoadStatic(CoachPanel, 'CoachPanel');
@@ -4074,6 +4099,9 @@ begin
 
   freeandnil(Main);
   Main := TThemeMain.Create;
+
+  freeandnil(CoachImport);
+  CoachImport := TThemeCoachImport.Create;
 
   freeandnil(Name);
   Name := TThemeName.Create;
