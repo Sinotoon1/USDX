@@ -598,6 +598,7 @@ implementation
 uses
   StrUtils,
   sdl2,
+  UWindowDefaults,
   UCommandLine,
   UDataBase,
   UDllManager,
@@ -1298,6 +1299,8 @@ procedure TIni.LoadScreenModes(IniFile: TCustomIniFile);
 var
   I, Success, DisplayIndex:     integer;
   CurrentMode, ModeIter, MaxMode: TSDL_DisplayMode;
+  UsableBounds: TSDL_Rect;
+  DefaultWidth, DefaultHeight: integer;
   CurrentRes, ResString: string;
 begin
   MaxFramerate := ReadArrayIndex(IMaxFramerate, IniFile, 'Graphics', 'MaxFramerate', IGNORE_INDEX, '60');
@@ -1309,7 +1312,7 @@ begin
   Split := ReadArrayIndex(ISplit, IniFile, 'Graphics', 'Split', 0);
 
   // FullScreen
-  FullScreen := ReadArrayIndex(IFullScreen, IniFile, 'Graphics', 'FullScreen', IGNORE_INDEX, 'Borderless');
+  FullScreen := ReadArrayIndex(IFullScreen, IniFile, 'Graphics', 'FullScreen', IGNORE_INDEX, 'Off');
 
   // PositionX
   PositionX := StrToInt(IniFile.ReadString('Graphics', 'PositionX', '0'));
@@ -1351,6 +1354,7 @@ begin
 
   // retrieve currently used Video Display
   DisplayIndex := -1;
+  CurrentRes := DEFAULT_RESOLUTION;
   MaxMode.h := 0; MaxMode.w := 0;
   CurrentMode.h := -1; CurrentMode.w := -1;
   for I := 0 to SDL_GetNumVideoDisplays() - 1 do
@@ -1405,7 +1409,18 @@ begin
   ResString := IniFile.ReadString('Graphics', 'Resolution', '');
   if ResString = '' then
   begin
-    ResString := CurrentRes; // either store desktop resolution or invalid which results into DEFAULT
+    if FullScreen = 0 then
+    begin
+      if (DisplayIndex < 0) or (SDL_GetDisplayUsableBounds(DisplayIndex, @UsableBounds) <> 0) then
+      begin
+        UsableBounds.w := CurrentMode.w;
+        UsableBounds.h := CurrentMode.h;
+      end;
+      GetDefaultWindowSize(UsableBounds.w, UsableBounds.h, DefaultWidth, DefaultHeight);
+      ResString := BuildResolutionString(DefaultWidth, DefaultHeight);
+    end
+    else
+      ResString := CurrentRes; // fullscreen retains the native desktop resolution
   end;
 
   // check if stored resolution is valid

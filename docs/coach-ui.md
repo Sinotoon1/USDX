@@ -7,6 +7,16 @@ pipeline and scoring policy. It adds no web wrapper or image-based screen.
 Fresh configurations use Chinese and the Deluxe theme. A saved language/theme
 choice is not overwritten; English and Modern remain available.
 
+Fresh configurations start **windowed at up to 1280×960**, preserving the native
+4:3 layout instead of stretching it across a widescreen desktop. The default
+shrinks proportionally to SDL's usable desktop bounds, with 64 pixels reserved
+in each dimension for window decorations/margins. For example, a 1920×1032
+Windows work area uses 1280×960; a 1024×768 desktop uses 936×702. Missing display
+metrics fall back to 800×600. Saved resolution and fullscreen choices take
+precedence; fullscreen still defaults to the desktop's native resolution.
+`UWindowDefaults` is platform-independent and tested by `coach_window_test.pas`.
+Usable-area semantics follow the [SDL2 API](https://wiki.libsdl.org/SDL2/SDL_GetDisplayUsableBounds).
+
 The home screen gives practice and play equal, fixed 352×220 mode cards. Practice
 is initially focused. Secondary music library, statistics, editor and settings
 actions remain direct native buttons. Profile initialization before song entry

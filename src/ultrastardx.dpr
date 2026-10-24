@@ -193,6 +193,7 @@ uses
   UDraw             in 'base\UDraw.pas',
   URecord           in 'base\URecord.pas',
   UCoachCore        in 'base/UCoachCore.pas',
+  UWindowDefaults   in 'base/UWindowDefaults.pas',
   UTime             in 'base\UTime.pas',
   USong             in 'base\USong.pas',
   USongs            in 'base\USongs.pas',
