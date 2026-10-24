@@ -184,7 +184,7 @@ type
     TextP6DuetSixP:   integer;
 
 
-    StaticPausePopup: integer;
+    TextPause: integer;
 
     SongNameStatic:   integer;
     SongNameText:     integer;
@@ -217,6 +217,7 @@ var
 implementation
 
 uses
+  UCoachCore,
   Classes,
   Math,
   UDatabase,
@@ -585,10 +586,10 @@ begin
 
   LoadSingScreenTextures(true);
 
-  StaticPausePopup := ScreenSing.AddStatic(Theme.Sing.PausePopUp);
+  TextPause := ScreenSing.AddText(Theme.CoachPauseText);
 
   // <note> pausepopup is not visible at the beginning </note>
-  ScreenSing.Statics[StaticPausePopup].Visible := false;
+  ScreenSing.Text[TextPause].Visible := false;
 
   ScreenSing.Lyrics := TLyricEngine.Create(
       Theme.LyricBar.UpperX, Theme.LyricBar.UpperY, Theme.LyricBar.UpperW, Theme.LyricBar.UpperH,
@@ -974,15 +975,17 @@ begin
 
   FadeMessage();
 
-  // draw pausepopup
-  // FIXME: this is a workaround that the static is drawn over the lyrics, lines, scores and effects
-  // maybe someone could find a better solution
+  // Practice keeps its localized controls available while paused. Play uses native
+  // text rather than the old bitmap containing the English word "Pause".
   if ScreenSing.Paused then
   begin
-    ScreenSing.Statics[StaticPausePopup].Texture.Z := 1;
-    ScreenSing.Statics[StaticPausePopup].Visible := true;
-    ScreenSing.Statics[StaticPausePopup].Draw;
-    ScreenSing.Statics[StaticPausePopup].Visible := false;
+    if CoachMode <> cmPractice then
+    begin
+      Renderer.DrawQuad(0, 0, 1, 800, 600, 0, 0, 0, 0.7);
+      ScreenSing.Text[TextPause].Visible := true;
+      ScreenSing.Text[TextPause].Draw;
+      ScreenSing.Text[TextPause].Visible := false;
+    end;
     SDL_Delay(33);//wait a bit to save electricity...
   end;
 

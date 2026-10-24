@@ -169,6 +169,7 @@ uses
   UText,
   StrUtils,
   UCommandLine,
+  UCoachCore,
   UGraphic,
   UIni,
   UImage,
@@ -498,17 +499,20 @@ end;
 procedure TDisplay.SetCursor(ScreenHideMode: TCursorScreenHideMode);
 var
   Cursor: Integer;
+  HideForSong: boolean;
 begin
   Cursor := 0;
+  HideForSong := (CurrentScreen = @ScreenSing) and (ScreenHideMode = cshDefault)
+    and (CoachMode <> cmPractice);
 
   if (Ini.Mouse = 2) and
-     (Cursor_HiddenByScreen <> ((CurrentScreen = @ScreenSing) and (ScreenHideMode = cshDefault))) then
+     (Cursor_HiddenByScreen <> HideForSong) then
   begin
     Cursor_Visible := false;
     Cursor_Fade := false;
   end;
 
-  Cursor_HiddenByScreen := (CurrentScreen = @ScreenSing) and (ScreenHideMode = cshDefault);
+  Cursor_HiddenByScreen := HideForSong;
 
   if not Cursor_HiddenByScreen then
   begin

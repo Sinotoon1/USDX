@@ -86,13 +86,17 @@ type
     procedure SaveLocalScores;
   private
     fCoachLine, fCoachTarget, fCoachText, fCoachHelp: integer;
+    fCoachTitle, fCoachMetrics, fCoachState, fCoachPanel, fCoachPlayText: integer;
+    fCoachButtons: array[0..5] of integer;
     fCoachStart, fCoachEnd: double;
     fCoachLoop: boolean;
     fCoachTick: cardinal;
     fCoachGate: TCoachGate;
     procedure CoachPhrase(Offset: integer);
+    procedure CoachAction(Action: integer);
+    procedure CoachStatus(const Key, ColorName: string);
     procedure CoachUpdate;
-    procedure CoachDraw;
+    procedure CoachRefreshHUD;
   public
     CheckPlayerConfigOnNextSong: boolean;
     eSongLoaded: THookableEvent; //< event is called after lyrics of a song are loaded on OnShow
@@ -254,16 +258,14 @@ begin
     if CoachMode = cmPractice then
     begin
       case PressedKey of
-        SDLK_F1: begin CoachPhrase(-1); Exit; end;
-        SDLK_F2: begin CoachPhrase(1); Exit; end;
-        SDLK_F3: begin CoachPhrase(0); Exit; end;
-        SDLK_R: begin CoachPhrase(0); Exit; end;
-        SDLK_F4: begin fCoachLoop := not fCoachLoop; Exit; end;
-        SDLK_F8: begin
-          CoachDelayConfirmed := not CoachDelayConfirmed;
-          fCoachGate.Reset;
-          Exit;
-        end;
+        SDLK_F1: begin CoachAction(0); Exit; end;
+        SDLK_F2: begin CoachAction(1); Exit; end;
+        SDLK_F3, SDLK_R: begin CoachAction(2); Exit; end;
+        SDLK_F4: begin CoachAction(3); Exit; end;
+        SDLK_F8: begin CoachAction(5); Exit; end;
+        SDLK_RETURN: begin CoachAction(Interaction); Exit; end;
+        SDLK_LEFT: if SDL_ModState = 0 then begin InteractPrev; Exit; end;
+        SDLK_RIGHT: if SDL_ModState = 0 then begin InteractNext; Exit; end;
       end;
     end;
     // check normal keys
@@ -689,6 +691,7 @@ begin
 end;
 
 constructor TScreenSingController.Create;
+var I, J: integer;
 begin
   inherited Create;
   ScreenSing := self;
@@ -698,12 +701,21 @@ begin
   BackgroundAspectCorrection := acoLetterBox;
 
   ClearSettings;
-  fCoachHelp := AddText(30, 15, 0, 0, 13, 1, 1, 1, '');
-  fCoachText := AddText(30, 40, 0, 0, 21, 1, 1, 1, '');
-  Text[fCoachHelp].Z := 1;
-  Text[fCoachText].Z := 1;
-  Text[fCoachHelp].Visible := false;
-  Text[fCoachText].Visible := false;
+  fCoachPanel := AddStatic(Theme.CoachPanel);
+  fCoachTitle := AddText(Theme.CoachTitle);
+  fCoachText := AddText(Theme.CoachStatus);
+  fCoachMetrics := AddText(Theme.CoachMetrics);
+  fCoachState := AddText(Theme.CoachState);
+  fCoachHelp := AddText(Theme.CoachHelp);
+  fCoachPlayText := AddText(Theme.CoachPlayText);
+  for I := Low(fCoachButtons) to High(fCoachButtons) do
+  begin
+    fCoachButtons[I] := AddButton(Theme.CoachButton[I]);
+    // AddButtonText does not copy the theme Z; keep controls above note layers.
+    for J := 0 to High(Button[fCoachButtons[I]].Text) do
+      Button[fCoachButtons[I]].Text[J].Z := Theme.CoachButton[I].Text[J].Z;
+    Button[fCoachButtons[I]].Visible := false;
+  end;
 end;
 
 destructor TScreenSingController.Destroy;
@@ -974,6 +986,8 @@ begin
   fCoachLoop := true;
   fCoachTick := 0;
   fCoachTarget := -1;
+  fCoachStart := 0;
+  fCoachEnd := 0;
   CoachDelayConfirmed := false;
   if CoachMode = cmPractice then
   begin
@@ -1631,8 +1645,36 @@ begin
   Text[screenSingViewRef.TextP6DuetSixP].Visible   := V6DuetSixP and ScreenSing.Settings.AvatarsVisible;
 
   if (CoachMode = cmPractice) and ShowFinish and not FadeOut then CoachUpdate;
+  CoachRefreshHUD;
   Result := screenSingViewRef.Draw();
-  CoachDraw;
+end;
+
+procedure TScreenSingController.CoachAction(Action: integer);
+begin
+  Log.LogStatus('action='+IntToStr(Action), 'CoachUI');
+  case Action of
+    0: CoachPhrase(-1);
+    1: CoachPhrase(1);
+    2: CoachPhrase(0);
+    3: fCoachLoop := not fCoachLoop;
+    4: Pause;
+    5: begin
+      // Confirmation is session-only; this button does not measure latency.
+      CoachDelayConfirmed := not CoachDelayConfirmed;
+      fCoachGate.Reset;
+      fCoachTick := High(cardinal);
+    end;
+  end;
+end;
+
+procedure TScreenSingController.CoachStatus(const Key, ColorName: string);
+var R, G, B: real;
+begin
+  Text[fCoachText].Text := Language.Translate(Key);
+  LoadColor(R, G, B, ColorName);
+  Text[fCoachText].ColR := R;
+  Text[fCoachText].ColG := G;
+  Text[fCoachText].ColB := B;
 end;
 
 procedure TScreenSingController.CoachPhrase(Offset: integer);
@@ -1675,7 +1717,8 @@ begin
   if Paused then
   begin
     fCoachGate.Reset;
-    Text[fCoachText].Text := Language.Translate('COACH_WAIT');
+    CoachStatus('COACH_PAUSED', 'CoachMuted');
+    Text[fCoachMetrics].Text := Language.Translate('COACH_RESUME');
     Exit;
   end;
   if fCoachLoop and (fCoachEnd > fCoachStart) and
@@ -1685,21 +1728,27 @@ begin
   if not Assigned(Sound) then Exit;
   if Sound.CoachPitchTick = fCoachTick then Exit;
   fCoachTick := Sound.CoachPitchTick;
-  Text[fCoachText].Text := Language.Translate('COACH_WAIT');
-  if not CurrentSong.CoachReferenceReviewed then
-    Text[fCoachText].Text := Language.Translate('COACH_AUTO');
-  if not Sound.CoachPitch.Valid then begin fCoachGate.Reset; Exit; end;
-  Text[fCoachText].Text := Format('%.1f Hz', [Sound.CoachPitch.Hz]);
+  CoachStatus('COACH_WAIT', 'CoachMuted');
+  Text[fCoachMetrics].Text := Language.Translate('COACH_NO_VOICE');
   if not CurrentSong.CoachReferenceReviewed then
   begin
-    Text[fCoachText].Text := Text[fCoachText].Text+' | '+Language.Translate('COACH_AUTO');
+    CoachStatus('COACH_AUTO', 'CoachSharp');
+    Text[fCoachMetrics].Text := Language.Translate('COACH_REVIEW_HINT');
+  end
+  else if not CoachDelayConfirmed then CoachStatus('COACH_DELAY', 'CoachSharp');
+  if not Sound.CoachPitch.Valid then begin fCoachGate.Reset; Exit; end;
+  Text[fCoachMetrics].Text := Format(Language.Translate('COACH_LIVE_HZ'), [Sound.CoachPitch.Hz]);
+  if not CurrentSong.CoachReferenceReviewed then
+  begin
     fCoachGate.Reset; Exit;
   end;
   if not CoachDelayConfirmed then
   begin
-    Text[fCoachText].Text := Text[fCoachText].Text+' | '+Language.Translate('COACH_DELAY');
     fCoachGate.Reset; Exit;
   end;
+  CoachStatus('COACH_STABILIZING', 'CoachMuted');
+  if Length(CurrentSong.Tracks) = 0 then Exit;
+  if fCoachLine > High(CurrentSong.Tracks[0].Lines) then Exit;
   Time := LyricsState.GetCurrentTime-Ini.MicDelay/1000-
     Sound.AnalysisBufferSize/(2*Sound.AudioFormat.SampleRate);
   Line := @CurrentSong.Tracks[0].Lines[fCoachLine];
@@ -1717,15 +1766,16 @@ begin
       Cents := 1200*Log2(Sound.CoachPitch.Hz/TargetHz);
       Hint := fCoachGate.Update(fCoachTick, Cents, true);
       case Hint of
-        chFlat: Text[fCoachText].Text := Language.Translate('COACH_FLAT');
-        chSharp: Text[fCoachText].Text := Language.Translate('COACH_SHARP');
-        chClose: Text[fCoachText].Text := Language.Translate('COACH_CLOSE');
+        chFlat: CoachStatus('COACH_FLAT', 'CoachFlat');
+        chSharp: CoachStatus('COACH_SHARP', 'CoachSharp');
+        chClose: CoachStatus('COACH_CLOSE', 'CoachClose');
         else Exit;
       end;
-      Text[fCoachText].Text := Text[fCoachText].Text+' ';
-      if fCoachGate.MedianCents >= 0 then Text[fCoachText].Text := Text[fCoachText].Text+'+';
-      Text[fCoachText].Text := Text[fCoachText].Text+
-        Format('%.0f cents | %.1f Hz', [fCoachGate.MedianCents, Sound.CoachPitch.Hz]);
+      Text[fCoachMetrics].Text := '';
+      if fCoachGate.MedianCents >= 0 then Text[fCoachMetrics].Text := '+';
+      Text[fCoachMetrics].Text := Text[fCoachMetrics].Text+
+        Format('%.0f ', [fCoachGate.MedianCents])+Language.Translate('COACH_CENTS')+'  |  '+
+        Format(Language.Translate('COACH_FREQUENCIES'), [Sound.CoachPitch.Hz, TargetHz]);
       Exit;
     end;
   end;
@@ -1733,26 +1783,41 @@ begin
   fCoachTarget := -1;
 end;
 
-procedure TScreenSingController.CoachDraw;
+procedure TScreenSingController.CoachRefreshHUD;
+var Practice: boolean; I, Count: integer;
+    ReferenceText, DelayText: UTF8String;
 begin
-  if CoachMode = cmPractice then
-    Text[fCoachHelp].Text := Format(Language.Translate('COACH_KEYS'),
-      [fCoachLine+1, Ini.MicDelay, BoolToStr(fCoachLoop, true)])
-  else
+  Practice := CoachMode = cmPractice;
+  Statics[fCoachPanel].Visible := Practice;
+  Text[fCoachTitle].Visible := Practice;
+  Text[fCoachText].Visible := Practice;
+  Text[fCoachMetrics].Visible := Practice;
+  Text[fCoachState].Visible := Practice;
+  Text[fCoachHelp].Visible := Practice;
+  Text[fCoachPlayText].Visible := not Practice;
+  for I := Low(fCoachButtons) to High(fCoachButtons) do
+    Button[fCoachButtons[I]].Visible := Practice;
+  if not Practice then
   begin
-    Text[fCoachHelp].Text := Language.Translate('COACH_PLAY');
+    Text[fCoachPlayText].Text := Language.Translate('COACH_PLAY');
     if not CurrentSong.CoachReferenceReviewed then
-      Text[fCoachHelp].Text := Text[fCoachHelp].Text+' | '+Language.Translate('COACH_AUTO');
+      Text[fCoachPlayText].Text := Language.Translate('COACH_PLAY_UNRANKED');
+    Exit;
   end;
-  Text[fCoachHelp].Visible := true;
-  Text[fCoachHelp].Draw;
-  Text[fCoachHelp].Visible := false;
-  if CoachMode = cmPractice then
-  begin
-    Text[fCoachText].Visible := true;
-    Text[fCoachText].Draw;
-    Text[fCoachText].Visible := false;
-  end;
+  Count := 0;
+  if Length(CurrentSong.Tracks) > 0 then Count := Length(CurrentSong.Tracks[0].Lines);
+  Text[fCoachTitle].Text := Format(Language.Translate('COACH_PHRASE'), [fCoachLine+1, Count]);
+  if CurrentSong.CoachReferenceReviewed then ReferenceText := Language.Translate('COACH_REFERENCE_READY')
+  else ReferenceText := Language.Translate('COACH_REFERENCE_AUTO');
+  if CoachDelayConfirmed then DelayText := Language.Translate('COACH_DELAY_READY')
+  else DelayText := Language.Translate('COACH_DELAY_PENDING');
+  Text[fCoachState].Text := ReferenceText+'  |  '+Format(DelayText, [Ini.MicDelay]);
+  if fCoachLoop then Button[fCoachButtons[3]].Text[0].Text := Language.Translate('COACH_LOOP_ON')
+  else Button[fCoachButtons[3]].Text[0].Text := Language.Translate('COACH_LOOP_OFF');
+  if Paused then Button[fCoachButtons[4]].Text[0].Text := Language.Translate('COACH_RESUME')
+  else Button[fCoachButtons[4]].Text[0].Text := Language.Translate('COACH_PAUSE');
+  if CoachDelayConfirmed then Button[fCoachButtons[5]].Text[0].Text := Language.Translate('COACH_REVOKE_DELAY')
+  else Button[fCoachButtons[5]].Text[0].Text := Language.Translate('COACH_CONFIRM_DELAY');
 end;
 
 function TScreenSingController.FinishedMusic: boolean;

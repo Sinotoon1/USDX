@@ -76,7 +76,7 @@ const
   CHANNEL_OFF = 0;         // for field ChannelToPlayerMap
   LATENCY_AUTODETECT = -1; // for field Latency
   DEFAULT_RESOLUTION = '800x600';
-  DEFAULT_THEME = 'Modern';
+  DEFAULT_THEME = 'Deluxe';
   DEFAULT_HIGH_SCORE_SCREEN_ENTRIES = 5;
   MIN_HIGH_SCORE_SCREEN_ENTRIES = 5;
   MAX_HIGH_SCORE_SCREEN_ENTRIES = 20;
@@ -1552,8 +1552,8 @@ begin
   Difficulty := ReadArrayIndex(IDifficulty, IniFile, 'Game', 'Difficulty', IGNORE_INDEX, 'Medium');
 
   // Language
-  Language := ReadArrayIndex(ILanguage, IniFile, 'Game', 'Language', IGNORE_INDEX, 'English');
-  if Language < 0 then Language := GetArrayIndex(ILanguage, 'English'); // Default to english
+  Language := ReadArrayIndex(ILanguage, IniFile, 'Game', 'Language', IGNORE_INDEX, 'Chinese');
+  if Language < 0 then Language := GetArrayIndex(ILanguage, 'English'); // English fallback if Chinese is not installed
   if Language < 0 then Language := 0; // Default to first available
 
   // SongMenu

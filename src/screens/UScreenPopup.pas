@@ -1542,7 +1542,7 @@ begin
 
   Button[0].Visible := true;
 
-  Button[0].Text[0].Text := 'OK';
+  Button[0].Text[0].Text := Language.Translate('MSG_OK');
 end;
 
 { TScreenPopupError }

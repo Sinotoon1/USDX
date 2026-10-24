@@ -1149,6 +1149,10 @@ type
     Themes:           array of TThemeEntry;
     Loading:          TThemeLoading;
     Main:             TThemeMain;
+    CoachPanel:       TThemeStatic;
+    CoachTitle, CoachStatus, CoachMetrics, CoachState, CoachHelp, CoachPlayText: TThemeText;
+    CoachPauseText:    TThemeText;
+    CoachButton:      array[0..5] of TThemeButton;
     Name:             TThemeName;
     Song:             TThemeSong;
     Sing:             TThemeSing;
@@ -1523,6 +1527,18 @@ begin
       ThemeLoadButton(Main.ButtonOptions, 'MainButtonOptions');
       ThemeLoadButton(Main.ButtonAbout, 'MainButtonAbout');
       ThemeLoadButton(Main.ButtonExit, 'MainButtonExit');
+
+      // Shared native practice controls, also available when switching themes.
+      ThemeLoadStatic(CoachPanel, 'CoachPanel');
+      ThemeLoadText(CoachTitle, 'CoachTitle');
+      ThemeLoadText(CoachStatus, 'CoachStatus');
+      ThemeLoadText(CoachMetrics, 'CoachMetrics');
+      ThemeLoadText(CoachState, 'CoachState');
+      ThemeLoadText(CoachHelp, 'CoachHelp');
+      ThemeLoadText(CoachPlayText, 'CoachPlayText');
+      ThemeLoadText(CoachPauseText, 'CoachPauseText');
+      for I := Low(CoachButton) to High(CoachButton) do
+        ThemeLoadButton(CoachButton[I], 'CoachButton'+IntToStr(I+1));
 
       //Main Desc Text Translation Start
 

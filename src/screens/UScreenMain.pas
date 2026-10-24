@@ -273,7 +273,7 @@ begin
 
   if Length(Button[0].Text) > 0 then Button[0].Text[0].Text := Language.Translate('COACH_PLAY');
   if Length(Button[1].Text) > 0 then Button[1].Text[0].Text := Language.Translate('COACH_PRACTICE');
-  Interaction := 0;
+  Interaction := 1;
 
   WantSoftwareRenderingMsg := Renderer.SoftwareRendering;
 end;
@@ -282,7 +282,7 @@ procedure TScreenMain.StartCoach(Mode: TCoachMode);
 begin
   if Songs.SongList.Count < 1 then
   begin
-    ScreenPopupError.ShowPopup(Language.Translate('ERROR_NO_SONGS'));
+    ScreenPopupError.ShowPopup(Language.Translate('COACH_NO_SONGS'));
     Exit;
   end;
   CoachMode := Mode;
