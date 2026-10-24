@@ -63,6 +63,7 @@ type
       fVoiceStream: TAudioVoiceStream; // stream for voice passthrough
       fAnalysisBufferLock: PSDL_Mutex;
       fCoachCaptureTick: Cardinal;
+      fCoachDebugTick: Cardinal;
       fAudioFormat: TAudioFormatInfo;
       Frequencies: TFrequencyArray;
       Delays: TDelayArray;
@@ -219,6 +220,7 @@ type
 implementation
 
 uses
+  UCommandLine,
   ULog,
   UNote;
 
@@ -399,6 +401,13 @@ begin
       if (MaxVolume < Threshold) or (SDL_GetTicks-fCoachCaptureTick > 150) then
         CoachPitch.Valid := false;
       CoachPitchTick := SDL_GetTicks;
+      if Params.Debug and (CoachPitchTick-fCoachDebugTick >= 1000) then
+      begin
+        Log.LogStatus(Format('valid=%s hz=%.2f confidence=%.3f rate=%.0f age=%d peak=%.3f',
+          [BoolToStr(CoachPitch.Valid, true), CoachPitch.Hz, CoachPitch.Confidence,
+           AudioFormat.SampleRate, CoachPitchTick-fCoachCaptureTick, MaxVolume]), 'CoachPitch');
+        fCoachDebugTick := CoachPitchTick;
+      end;
     end;
 
     // check if signal has an acceptable volume (ignore background-noise)

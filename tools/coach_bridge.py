@@ -110,6 +110,12 @@ def export_reference(job_dir, songs_root, title, artist, *, allow_unreviewed=Fal
         shutil.copyfile(source, stage / audio)
         for name in ("vocals.wav", "instrumental.wav", "pitch.json"):
             shutil.copyfile(job_dir / name, stage / name)
+        expected = {**job["artifacts"], audio: job["source_sha256"]}
+        if any(
+            digest(stage / name) != expected[name]
+            for name in (audio, "vocals.wav", "instrumental.wav", "pitch.json")
+        ):
+            raise ValueError("artifact_changed_during_export")
         status = "reviewed" if reviewed else "auto"
         text = "\n".join(
             [
@@ -150,6 +156,8 @@ def export_reference(job_dir, songs_root, title, artist, *, allow_unreviewed=Fal
         stage.rename(target)
     finally:
         if stage.exists():
+            if stage.resolve().parent != songs_root.resolve():
+                raise ValueError("staging_cleanup_path_changed")
             shutil.rmtree(stage)
     return target
 

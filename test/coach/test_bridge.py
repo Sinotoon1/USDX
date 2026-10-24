@@ -5,6 +5,7 @@ import tempfile
 import unittest
 import wave
 from pathlib import Path
+from unittest.mock import patch
 
 MODULE = Path(__file__).resolve().parents[2] / "tools" / "coach_bridge.py"
 
@@ -139,6 +140,22 @@ class BridgeTests(unittest.TestCase):
         self.save_job()
         with self.assertRaisesRegex(ValueError, "stem_timeline_mismatch"):
             self.export()
+
+    def test_changed_during_copy_is_rejected_before_publish(self):
+        copy = self.bridge.shutil.copyfile
+
+        def corrupt_copy(source, destination):
+            result = copy(source, destination)
+            if Path(destination).name == "instrumental.wav":
+                with Path(destination).open("r+b") as stream:
+                    stream.seek(-2, 2)
+                    stream.write(b"xx")
+            return result
+
+        with patch.object(self.bridge.shutil, "copyfile", side_effect=corrupt_copy):
+            with self.assertRaisesRegex(ValueError, "artifact_changed_during_export"):
+                self.export()
+        self.assertEqual(list(self.out.glob("*")), [])
 
 
 if __name__ == "__main__":

@@ -700,6 +700,8 @@ begin
   ClearSettings;
   fCoachHelp := AddText(30, 15, 0, 0, 13, 1, 1, 1, '');
   fCoachText := AddText(30, 40, 0, 0, 21, 1, 1, 1, '');
+  Text[fCoachHelp].Z := 1;
+  Text[fCoachText].Z := 1;
   Text[fCoachHelp].Visible := false;
   Text[fCoachText].Visible := false;
 end;
