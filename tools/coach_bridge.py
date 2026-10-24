@@ -114,6 +114,8 @@ def export_reference(
         rows, previous, phrase_start = [], -1, 0
         for row in chart:
             start, end = row["start_tick"], row["end_tick"]
+            if not rows:
+                phrase_start = start
             if rows and (start - previous >= 35 or start - phrase_start >= 500):
                 rows.append(f"- {previous}")
                 phrase_start = start

@@ -167,6 +167,30 @@ class LyricsBridgeTests(unittest.TestCase):
         self.assertEqual(before, (old / "song.txt").read_bytes())
         self.assertIn("-lyrics-", new.name)
 
+    def test_intro_does_not_split_the_first_lyric_word_into_its_own_phrase(self):
+        import wave
+
+        f = self.fixture
+        for name in ("vocals.wav", "instrumental.wav"):
+            with wave.open(str(f.job / name), "wb") as audio:
+                audio.setparams((2, 2, 44100, 0, "NONE", "PCM"))
+                audio.writeframes(bytes(44100 * 4 * 9))
+        pitch = json.loads((f.job / "pitch.json").read_text(encoding="utf-8"))
+        for index, n in enumerate(pitch["notes"]):
+            n["start_seconds"], n["end_seconds"] = 6 + index * 0.5, 6.5 + index * 0.5
+        (f.job / "pitch.json").write_text(json.dumps(pitch), encoding="utf-8")
+        f.metadata["source_sha256"] = f.bridge.digest(f.job / "vocals.wav")
+        f.save_job()
+        self.doc.update(
+            duration_seconds=9,
+            source_sha256=f.metadata["source_sha256"],
+            vocals_sha256=f.metadata["artifacts"]["vocals.wav"],
+            words=[word(6, 6.5, "晨"), word(6.5, 7, "光")],
+        )
+        self.save()
+        text = (self.export() / "song.txt").read_text(encoding="utf-8")
+        self.assertFalse(any(line.startswith("- ") for line in text.splitlines()))
+
 
 if __name__ == "__main__":
     unittest.main()
