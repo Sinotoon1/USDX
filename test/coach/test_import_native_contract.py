@@ -8,6 +8,11 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class ImportNativeContracts(unittest.TestCase):
+    def test_windows_picker_uses_an_explicit_wide_record_abi(self):
+        source = (ROOT / "src/base/UCoachImport.pas").read_text(encoding="utf-8")
+        self.assertIn("ImportOpenFileName(var Info: TOpenFilenameW)", source)
+        self.assertIn("external 'comdlg32.dll' name 'GetOpenFileNameW'", source)
+
     def test_imported_covers_rebuild_resets_reserved_button_cursor(self):
         source = (ROOT / "src/screens/UScreenSong.pas").read_text(encoding="utf-8")
         body = source.split("procedure TScreenSong.RebuildImportedCatalogue;", 1)[

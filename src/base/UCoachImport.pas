@@ -35,6 +35,13 @@ implementation
 uses Math, FPJSON, JSONParser, UPlatform, UFileSystem
   {$IFDEF MSWINDOWS}, CommDlg{$ENDIF};
 
+{$IFDEF MSWINDOWS}
+// FPC 3.2.2's generic CommDlg declaration uses the ANSI pointer alias even
+// for this W entry point. Bind the documented wide record ABI explicitly.
+function ImportOpenFileName(var Info: TOpenFilenameW): BOOL; stdcall;
+  external 'comdlg32.dll' name 'GetOpenFileNameW';
+{$ENDIF}
+
 function ImportEnvironment(const Name: string): UTF8String;
 {$IFDEF MSWINDOWS}
 var Buffer: UnicodeString; N: DWORD;
@@ -58,7 +65,7 @@ begin
   Info.lpstrFilter := PWideChar(Filter); Info.lpstrFile := @Buffer[0];
   Info.nMaxFile := Length(Buffer);
   Info.Flags := OFN_FILEMUSTEXIST or OFN_PATHMUSTEXIST or OFN_EXPLORER or OFN_NOCHANGEDIR;
-  Result := GetOpenFileNameW(Info);
+  Result := ImportOpenFileName(Info);
   if Result then FileName := UTF8Encode(UnicodeString(PWideChar(@Buffer[0]))) else FileName := '';
 end;
 {$ELSE}
