@@ -122,6 +122,7 @@ type
 
       { sets SDL_ShowCursor depending on options set in Ini }
       procedure SetCursor(ScreenHideMode: TCursorScreenHideMode = cshDefault);
+      procedure ReleasePointer;
 
       { called when cursor moves, positioning of software cursor }
       procedure MoveCursor(X, Y: double);
@@ -509,12 +510,35 @@ begin
   end; // for
 end;
 
+procedure TDisplay.ReleasePointer;
+begin
+  OnMouseButton(false);
+  CancelPointerInput;
+  if Theme.Studio.Enabled then
+  begin
+    // A desktop UI never owns the pointer outside its client area.
+    SDL_CaptureMouse(SDL_FALSE);
+    if SDL_GetRelativeMouseMode = SDL_TRUE then SDL_SetRelativeMouseMode(SDL_FALSE);
+    SDL_SetWindowGrab(Screen, SDL_FALSE);
+  end;
+end;
+
 { sets SDL_ShowCursor depending on options set in Ini }
 procedure TDisplay.SetCursor(ScreenHideMode: TCursorScreenHideMode);
 var
   Cursor: Integer;
   HideForSong: boolean;
 begin
+  if Theme.Studio.Enabled then
+  begin
+    SDL_SetHintWithPriority('SDL_MOUSE_AUTO_CAPTURE', '0', SDL_HINT_OVERRIDE);
+    ReleasePointer;
+    Cursor_HiddenByScreen := false;
+    Cursor_Visible := false;
+    Cursor_Fade := false;
+    SDL_ShowCursor(SDL_ENABLE);
+    Exit;
+  end;
   Cursor := 0;
   HideForSong := (CurrentScreen = @ScreenSing) and (ScreenHideMode = cshDefault)
     and (CoachMode <> cmPractice);
@@ -597,6 +621,7 @@ var
   DrawX: double;
   Texture: TTexture;
 begin
+  if Theme.Studio.Enabled then Exit;
   if (Ini.Mouse = 2) and ((Screens = 1) or ((ScreenAct - 1) = (Round(Cursor_X+16) div RenderW))) then
   begin // draw software cursor
     Ticks := SDL_GetTicks;

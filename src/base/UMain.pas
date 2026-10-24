@@ -510,10 +510,12 @@ begin
         case Event.window.event of
           SDL_WINDOWEVENT_MOVED: OnWindowMoved(Event.window.data1, Event.window.data2);
           SDL_WINDOWEVENT_RESIZED: OnWindowResized(Event.window.data1, Event.window.data2);
-          SDL_WINDOWEVENT_FOCUS_LOST: begin
-            CheckMouseButton := false;
-            Display.OnMouseButton(false);
-            Display.CancelPointerInput;
+          SDL_WINDOWEVENT_FOCUS_LOST, SDL_WINDOWEVENT_LEAVE: begin
+            if (Event.window.event = SDL_WINDOWEVENT_FOCUS_LOST) or Theme.Studio.Enabled then
+            begin
+              CheckMouseButton := false;
+              Display.ReleasePointer;
+            end;
           end;
         end
       end;
