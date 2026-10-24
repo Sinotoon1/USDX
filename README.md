@@ -1,5 +1,12 @@
 # UltraStar Deluxe
 
+## USDX Coach fork
+
+This fork adds separate **Practice** and **Play** entry points and a song bridge to
+an existing local Python MDX / pYIN singing-coach pipeline. Practice loops phrases
+and displays confidence-gated, absolute-pitch feedback without saving game highscores.
+See [中文接入与使用说明](docs/coach-quickstart.zh-CN.md) and [first-increment contract](SPEC-coach.md).
+
 [![Build Status](https://github.com/UltraStar-Deluxe/USDX/actions/workflows/main.yml/badge.svg)](https://github.com/UltraStar-Deluxe/USDX/actions/workflows/main.yml)
 [![License](https://img.shields.io/badge/license-GPLv2-blue.svg)](LICENSE)
 
