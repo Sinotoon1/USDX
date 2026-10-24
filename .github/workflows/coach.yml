@@ -82,6 +82,20 @@ jobs:
           fpc -Twin64 -Px86_64 -Si -Sg- -Sc- -Ciro -gl -Xs- -O2 -FU../coach-capture-bin -o../coach-capture-bin/coach_capture_runtime.exe coach_capture_runtime.dpr
           cd ../game
           ../coach-capture-bin/coach_capture_runtime.exe
+      - name: Bind lightweight update to the full runtime
+        shell: pwsh
+        run: |
+          python test/coach/runtime_manifest.py
+          if ($LASTEXITCODE -ne 0) { throw 'Runtime manifest generation failed' }
+      - uses: actions/upload-artifact@v6
+        with:
+          name: USDX-Coach-windows-update
+          path: |
+            runtime-manifest.json
+            game/ultrastardx.exe
+            game/languages/Chinese.ini
+            game/languages/English.ini
+          if-no-files-found: error
       - uses: actions/upload-artifact@v6
         with:
           name: USDX-Coach-windows-portable

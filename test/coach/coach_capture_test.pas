@@ -104,6 +104,7 @@ begin
     Input.CaptureStart;
     for I := 0 to High(Samples) do
       Samples[I] := Round(12000*Sin(2*Pi*440*I/44100));
+    Ini.SavePlayback := 1;
     SDL_Delay(45);
     AudioInputProcessor.HandleMicrophoneData(PByteArray(@Samples[0]), SizeOf(Samples), Device);
     AudioInputProcessor.Sound[0].AnalyzeBuffer;
@@ -111,10 +112,16 @@ begin
       (Abs(AudioInputProcessor.Sound[0].CoachPitch.Hz-440) < 2),
       'a successful retry resumes fresh practice pitch detection');
     Input.CaptureStop;
+    Check(AudioInputProcessor.Sound[0].LogBuffer.Size = SizeOf(Samples),
+      'stopping preserves the recording for Finish/LogVoice');
     Check(not Assigned(AudioInputProcessor.Sound[0].AudioFormat) and
       not AudioInputProcessor.Sound[0].CoachPitch.Valid,
       'capture stop invalidates all input state');
     Writeln('PASS retry: real PCM buffer detects 440 Hz; stopping clears pitch');
+    AudioInputProcessor.Sound[0].Clear;
+    Check(AudioInputProcessor.Sound[0].LogBuffer.Size = 0,
+      'starting a new session clears the old recording');
+    Writeln('PASS recording: stop preserves LogVoice data; next session clears it');
     SetLength(AudioInputProcessor.DeviceList, 0);
   finally
     Input.Free;

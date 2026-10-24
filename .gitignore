@@ -76,3 +76,4 @@ __pycache__/
 game/songs/coach-*/
 /src/coach_capture_runtime.dpr
 /coach-capture-bin/
+/runtime-manifest.json

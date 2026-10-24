@@ -20,7 +20,7 @@ class CaptureContracts(unittest.TestCase):
         stop = source.split("procedure TCaptureBuffer.StopCapture();", 1)[1]
         stop = stop.split("{ TAudioInputProcessor }", 1)[0]
         self.assertIn("FreeAndNil(fAudioFormat)", stop)
-        self.assertIn("Clear;", stop)
+        self.assertIn("ClearAnalysis;", stop)
 
     def test_failed_device_start_unlinks_capture_buffers(self):
         source = (ROOT / "src/base/URecord.pas").read_text(encoding="utf-8")
@@ -59,6 +59,8 @@ class CaptureContracts(unittest.TestCase):
         )
         self.assertIn("build_capture_project.py", workflow)
         self.assertIn("../coach-capture-bin/coach_capture_runtime.exe", workflow)
+        self.assertIn("runtime_manifest.py", workflow)
+        self.assertIn("USDX-Coach-windows-update", workflow)
 
 
 if __name__ == "__main__":

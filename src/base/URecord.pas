@@ -72,6 +72,7 @@ type
 
       procedure BoostBuffer(Buffer: PByteArray; Size: integer);
       procedure ProcessNewBuffer(Buffer: PByteArray; BufferSize: integer);
+      procedure ClearAnalysis;
 
       procedure StartCapture(Format: TAudioFormatInfo);
       procedure StopCapture();
@@ -309,6 +310,11 @@ procedure TCaptureBuffer.Clear;
 begin
   if assigned(LogBuffer) then
     LogBuffer.Clear;
+  ClearAnalysis;
+end;
+
+procedure TCaptureBuffer.ClearAnalysis;
+begin
   LockAnalysisBuffer();
   FillChar(AnalysisBuffer[0], Length(AnalysisBuffer) * SizeOf(SmallInt), 0);
   FillChar(CoachPitch, SizeOf(CoachPitch), 0);
@@ -647,7 +653,8 @@ procedure TCaptureBuffer.StopCapture();
 begin
   FreeAndNil(fVoiceStream);
   FreeAndNil(fAudioFormat);
-  Clear;
+  // Finish dumps LogBuffer after CaptureStop when SavePlayback is enabled.
+  ClearAnalysis;
 end;
 
 { TAudioInputProcessor }
