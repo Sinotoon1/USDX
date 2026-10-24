@@ -16,6 +16,13 @@ ROOT = Path(os.environ.get("USDX_ROOT", Path(__file__).resolve().parents[2]))
 
 
 class StudioContracts(unittest.TestCase):
+    def test_native_text_hard_wrap_requires_a_bounded_width(self):
+        # Companion native fixture: explicit two-line text with W=0.
+        source = (ROOT / "src/menu/UMenuText.pas").read_text(encoding="utf-8")
+        start = source.index("procedure BreakLongWord;")
+        helper = source[start : source.index("Bound := LastBreak;", start)]
+        self.assertIn("if (W <= 0)", helper)
+
     def test_generator_handles_non_utf8_windows_system_locale(self):
         spec = importlib.util.spec_from_file_location(
             "studio_generator", ROOT / "tools/build_studio_theme.py"

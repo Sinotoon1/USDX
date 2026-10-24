@@ -177,7 +177,7 @@ var
     ExplicitBreak: boolean;
   begin
     // CJK and long unspaced tokens must wrap without splitting UTF-8 bytes.
-    if (Theme = nil) or not Theme.Studio.Enabled then Exit;
+    if (W <= 0) or (Theme = nil) or not Theme.Studio.Enabled then Exit;
     Bound := LastBreak;
     while Bound < NextPos do
     begin
