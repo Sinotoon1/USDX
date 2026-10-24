@@ -122,6 +122,14 @@ The worker adapts the existing `SongStore`/`ReferenceService`, reuses verified
 source/reference hashes and owns a cancellable model child. Native import workers
 are serialized per data directory. Do not simultaneously modify the same
 reference in the separate Python web app; that app does not share this lock.
+After pitch extraction, an isolated local faster-whisper worker recognizes
+lyrics with word timestamps. Measured word/note intervals are intersected;
+unpitched intervals become unscored freestyle notes, not fabricated targets.
+The page shows a lyric excerpt and actual low-confidence/unpitched word counts.
+Native imports require valid, reference-bound lyrics and never silently export la.
+`lyrics.json` and `lyrics.lrc` are hashed song-pack artifacts. Lyric revisions have
+distinct output names so legacy packs remain intact. Studio hides melisma `~`
+glyphs when drawing lyrics, while the source note durations and scoring remain.
 Audition enables, but does not itself perform, explicit reference confirmation.
 Publish revalidates artifacts and atomically exports through `coach_bridge`.
 Existing different/corrupt packs are not overwritten. Only a successfully
@@ -131,6 +139,10 @@ avoids appending the whole library again.
 Rebuilding catalogue cover buttons must free old entries/interactions and reset
 `ButtonPos := -1` before `GenerateThumbnails`. Reusing the old reserved cursor
 causes a range error even when the new song itself has loaded correctly.
+Studio uses a visible system cursor even when an old config selects Mouse=Game.
+It disables SDL auto-capture, relative mode and window grab, and cancels pointer
+press state on leave/focus loss. No mouse-warp call is added. Legacy themes retain
+their original cursor branch; saved mouse enable/disable settings are preserved.
 See [coach-import-validation.md](coach-import-validation.md) for the protocol,
 runtime checks, paths and reproducible maintenance workflow.
 

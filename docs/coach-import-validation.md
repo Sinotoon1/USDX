@@ -1,5 +1,8 @@
 # 音乐导入生成库：实现与验收（2026-10-24）
 
+本页记录最初的无歌词导入增量。当前原生导入已升级真实歌词与词级对齐；
+最新安装、试听尝试、鼠标修正和验收见 [coach-lyrics-validation.md](coach-lyrics-validation.md)。
+
 基线 `2885bbf9a51df12c9e6a6207bbca34755a433f4e`，分支
 `feature/practice-play-python`。运行源码
 `d6e6629977dc71b999cc97776c3ee1b5c58ade86`；之后的说明与任务记录不改变运行逻辑。
