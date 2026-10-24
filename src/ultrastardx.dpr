@@ -194,6 +194,8 @@ uses
   URecord           in 'base\URecord.pas',
   UCoachCore        in 'base/UCoachCore.pas',
   UWindowDefaults   in 'base/UWindowDefaults.pas',
+  UIMotion          in 'base/UIMotion.pas',
+  UStudioUI         in 'menu/UStudioUI.pas',
   UTime             in 'base\UTime.pas',
   USong             in 'base\USong.pas',
   USongs            in 'base\USongs.pas',

@@ -492,6 +492,11 @@ begin
         case Event.window.event of
           SDL_WINDOWEVENT_MOVED: OnWindowMoved(Event.window.data1, Event.window.data2);
           SDL_WINDOWEVENT_RESIZED: OnWindowResized(Event.window.data1, Event.window.data2);
+          SDL_WINDOWEVENT_FOCUS_LOST: begin
+            CheckMouseButton := false;
+            Display.OnMouseButton(false);
+            Display.CancelPointerInput;
+          end;
         end
       end;
       SDL_KEYDOWN, SDL_TEXTINPUT:

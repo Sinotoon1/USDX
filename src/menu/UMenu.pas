@@ -37,7 +37,7 @@ uses
   SysUtils,
   Math,
   sdl2,
-  UPath,
+  UPath, UIMotion,
   UMenuBackground,
   UMenuButton,
   UMenuButtonCollection,
@@ -81,6 +81,8 @@ type
 
       Interactions:     array of TInteract;
       SelInteraction:   integer;
+      StudioPointer: TUIPointer;
+      StudioShellVisible: boolean;
 
       ButtonPos:        integer;
       Button:           array of TButton;
@@ -201,6 +203,7 @@ type
       procedure OnShowFinish; virtual;
       procedure OnHide; virtual;
 
+      procedure CancelPointerInput; virtual;
       procedure OnWindowResized(); virtual;
 
       function IsSelectable(Int: cardinal): boolean;
@@ -270,7 +273,7 @@ uses
   UMenuBackgroundColor,
   UMenuBackgroundTexture,
   UMenuBackgroundVideo,
-  UMenuBackgroundFade;
+  UMenuBackgroundFade, UStudioUI;
 
 destructor TMenu.Destroy;
 var
@@ -309,6 +312,7 @@ begin
   Background := nil;
 
   RightMbESC := true;
+  CancelPointer(StudioPointer);
 end;
 
 function RGBFloatToInt(R, G, B: double): cardinal;
@@ -387,6 +391,7 @@ procedure TMenu.LoadFromTheme(const ThemeBasic: TThemeBasic);
 var
   I: integer;
 begin
+  StudioShellVisible := Theme.Studio.Enabled and ThemeBasic.StudioShell;
   //Add Button Collections (Set Button CollectionsLength)
   //Button Collections are Created when the first ChildButton is Created
   PrepareButtonCollections(ThemeBasic.ButtonCollection);
@@ -653,6 +658,7 @@ begin
     ThemeStatic.TexX1, ThemeStatic.TexY1, ThemeStatic.TexX2, ThemeStatic.TexY2, ThemeStatic.Alpha,
     Skin.GetTextureFileName(ThemeStatic.Tex),
     ThemeStatic.Typ, $FFFFFF, ThemeStatic.Reflection, ThemeStatic.Reflectionspacing);
+  Statics[Result].Flat := Theme.Studio.Enabled and ThemeStatic.Flat;
 end;
 
 function TMenu.AddStaticPosition(static: TThemePosition): integer;
@@ -988,6 +994,7 @@ begin
     ThemeButton.Reflection, ThemeButton.Reflectionspacing, ThemeButton.DeSelectReflectionspacing);
 
   Button[Result].Z := ThemeButton.Z;
+  Button[Result].Flat := Theme.Studio.Enabled and ThemeButton.Flat;
 
   //Button Visibility
   Button[Result].Visible := ThemeButton.Visible;
@@ -1019,6 +1026,8 @@ begin
       ThemeButton.Text[BT].ColR, ThemeButton.Text[BT].ColG, ThemeButton.Text[BT].ColB,
       ThemeButton.Text[BT].Font, ThemeButton.Text[BT].Style, ThemeButton.Text[BT].Size,
       ThemeButton.Text[BT].Align, ThemeButton.Text[BT].Text);
+    if Theme.Studio.Enabled then
+      Button[Result].Text[BT].Z := ThemeButton.Text[BT].Z;
   end;
 
   // button collection mod
@@ -1125,6 +1134,7 @@ end;
 function TMenu.DrawBG: boolean;
 begin
   Background.Draw;
+  if StudioShellVisible then StudioShell;
   Result := true;
 end;
 
@@ -1604,6 +1614,7 @@ begin
   for SO := 0 to High(Values) do
     AddSelectSlideOption(Values[SO]);
 
+  SelectsS[High(SelectsS)].Flat := Theme.Studio.Enabled;
   SelectsS[High(SelectsS)].Text.Size := ThemeSelectS.TextSize;
   SelectsS[High(SelectsS)].Text.Y := ThemeSelectS.Y + (ThemeSelectS.H /2 ) - (ThemeSelectS.TextSize / 2);
 
@@ -1804,6 +1815,7 @@ end;
 
 procedure TMenu.OnShow;
 begin
+  CancelPointerInput;
   if (Background = nil) then
     AddBackground(DEFAULT_BACKGROUND);
 
@@ -1823,9 +1835,17 @@ begin
   Background.OnFinish;
 end;
 
+procedure TMenu.CancelPointerInput;
+var
+  I: integer;
+begin
+  CancelPointer(StudioPointer);
+  for I := 0 to High(Button) do Button[I].SetPressed(false);
+end;
+
 procedure TMenu.OnWindowResized;
 begin
-  // nothing
+  CancelPointerInput;
 end;
 
 function TMenu.ShouldHandleInput(PressedKey: cardinal; CharCode: UCS4Char; PressedDown: boolean; out SuppressKey: boolean): boolean;
@@ -1846,6 +1866,8 @@ var
   Action: TMouseClickAction;
   ScrollY: real;
   InRegionScrollBar: boolean;
+  StudioActivated: boolean;
+  I: integer;
 begin
   //default mouse parsing: clicking generates return keypress,
   //override ParseMouse to customize
@@ -1872,6 +1894,21 @@ begin
   else
   begin
     nBut := InteractAt(X, Y);
+    StudioActivated := false;
+    if Theme.Studio.Enabled and (MouseButton = SDL_BUTTON_LEFT) then
+    begin
+      if BtnDown then
+      begin
+        PointerDown(StudioPointer, nBut);
+        if (nBut >= 0) and (Interactions[nBut].Typ = iButton) then
+          Button[Interactions[nBut].Num].SetPressed(true);
+      end
+      else
+      begin
+        StudioActivated := PointerUp(StudioPointer, nBut) >= 0;
+        for I := 0 to High(Button) do Button[I].SetPressed(false);
+      end;
+    end;
     if (nBut >= 0) and (not Scrolling) then
     begin
       //select on mouse-over
@@ -1880,7 +1917,7 @@ begin
 
       Action := maNone;
 
-      if (BtnDown) then
+      if ((not Theme.Studio.Enabled) and BtnDown) or StudioActivated then
       begin
         if (MouseButton = SDL_BUTTON_LEFT) then
         begin

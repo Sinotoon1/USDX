@@ -42,6 +42,7 @@ type
     public
       Texture:           TTexture; // Button Screen position and size
       Visible:           boolean;
+      Flat:              boolean;
 
       // for list item
       TextureSelect:     TTexture;
@@ -59,12 +60,20 @@ type
 
 implementation
 uses
-  UDisplay;
+  UDisplay, UCommon, UStudioUI, UThemes;
 
 procedure TStatic.Draw;
+var
+  Fill: TRGB;
 begin
   if Visible then
   begin
+    if Flat then
+    begin
+      Fill.R := Texture.ColR * Texture.Int; Fill.G := Texture.ColG * Texture.Int; Fill.B := Texture.ColB * Texture.Int;
+      StudioRoundRect(Texture.X, Texture.Y, Texture.Z, Texture.W, Texture.H, Theme.Studio.Radius, Fill, Texture.Alpha);
+      Exit;
+    end;
     Texture.Reflection := Reflection;
     Texture.ReflectionSpacing := ReflectionSpacing;
     Renderer.DrawTexture(Texture);

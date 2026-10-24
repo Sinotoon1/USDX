@@ -34,6 +34,7 @@ interface
 {$I switches.inc}
 
 uses
+  UIMotion, UCommon,
   UText,
   UMenuText,
   sdl2,
@@ -51,6 +52,8 @@ type
   TButton = class(IMenuWidget)
     protected
       SelectBool:   boolean;
+      FocusMotion, PressMotion: TUIMotion;
+      Pressed: boolean;
 
       FadeProgress: single;
       FadeLastTick: cardinal;
@@ -66,6 +69,7 @@ type
       TextOffset:                array of TTextOffset;
       Texture:                   TTexture; // Button Screen position and size
 
+      Flat:                      boolean;
       Colorized:                 boolean;
       DeSelectTexture:           TTexture; // texture for colorized hack
 
@@ -119,6 +123,7 @@ type
       property H: single read GetH write SetH;
       property Selected: boolean read SelectBool write SetSelect;
 
+      procedure SetPressed(Value: boolean);
       procedure   Draw; override;
 
       constructor Create(); overload;
@@ -133,7 +138,7 @@ implementation
 
 uses
   SysUtils,
-  UDisplay;
+  UDisplay, UThemes, UStudioUI;
 
 function TButton.GetX(): single;
 begin
@@ -284,14 +289,35 @@ begin
   end;
 end;
 
+procedure TButton.SetPressed(Value: boolean);
+begin
+  Pressed := Value;
+end;
+
 // ***** Public methods ****** //
 
 procedure TButton.Draw;
 var
   T:       integer;
   Tick:    cardinal;
-  Spacing: single;
+  Spacing, PressValue: single;
+  Normal, Hover: TRGB;
 begin
+  if Visible and Flat then
+  begin
+    RetargetMotion(FocusMotion, Ord(SelectBool), SDL_GetTicks, StudioDuration(Theme.Studio.HoverMs));
+    RetargetMotion(PressMotion, Ord(Pressed), SDL_GetTicks, StudioDuration(Theme.Studio.PressMs));
+    PressValue := MotionValue(PressMotion, SDL_GetTicks);
+    Normal.R := DeselectColR * DeselectInt; Normal.G := DeselectColG * DeselectInt; Normal.B := DeselectColB * DeselectInt;
+    Hover.R := SelectColR * SelectInt; Hover.G := SelectColG * SelectInt; Hover.B := SelectColB * SelectInt;
+    StudioButton(Texture, Normal, Hover, MotionValue(FocusMotion, SDL_GetTicks), PressValue, Selectable);
+    for T := 0 to High(Text) do
+    begin
+      Text[T].MoveY := PressValue;
+      Text[T].Draw;
+    end;
+    Exit;
+  end;
   if Visible then
   begin
     //Fade Mod
@@ -459,8 +485,14 @@ end;
 
 function TButton.GetMouseOverArea: TMouseOverRect;
 begin
+  FillChar(Result, SizeOf(Result), 0);
   if not(Display.Cursor_HiddenByScreen) then
   begin
+    if Flat then
+    begin
+      Result.X := PosX; Result.Y := PosY; Result.W := DeSelectW; Result.H := DeSelectH;
+      Exit;
+    end;
     if (not Fade) then
     begin
       Result.X := Texture.X;

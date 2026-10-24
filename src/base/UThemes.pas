@@ -119,6 +119,7 @@ type
   end;
 
   TThemeStatic = record
+    Flat: boolean;
     X:      integer;
     Y:      integer;
     Z:      real;
@@ -168,6 +169,7 @@ type
   AThemeText = array of TThemeText;
 
   TThemeButton = record
+    Flat: boolean;
     Text:   AThemeText;
     X:      integer;
     Y:      integer;
@@ -265,6 +267,7 @@ type
 
   PThemeBasic = ^TThemeBasic;
   TThemeBasic = class
+    StudioShell: boolean;
     Background:       TThemeBackground;
     Text:             AThemeText;
     Statics:           AThemeStatic;
@@ -1128,6 +1131,12 @@ type
   end;
   TThemeSectionlist = array of TThemeSection;
 
+  TStudioStyle = record
+    Enabled: boolean;
+    Radius: single;
+    HoverMs, PressMs, PageMs: cardinal;
+  end;
+
   TTheme = class
   private
     ThemeIni:         TMemIniFile;
@@ -1146,6 +1155,7 @@ type
     function ReadBool(const Sections: TThemeSectionList; const Key: string; DefaultValue: boolean): boolean;
     function ReadFloat(const Sections: TThemeSectionList; const Key: string; DefaultValue: real): real;
   public
+    Studio:           TStudioStyle;
     Themes:           array of TThemeEntry;
     Loading:          TThemeLoading;
     Main:             TThemeMain;
@@ -1494,6 +1504,11 @@ begin
   begin
     Result := true;
     OpenFile(ThemeNum);
+    Studio.Enabled := ThemeIni.ReadBool('Studio', 'Enabled', false);
+    Studio.Radius := EnsureRange(ThemeIni.ReadFloat('Studio', 'Radius', 8), 0.0, 16.0);
+    Studio.HoverMs := EnsureRange(ThemeIni.ReadInteger('Studio', 'HoverMs', 160), 0, 500);
+    Studio.PressMs := EnsureRange(ThemeIni.ReadInteger('Studio', 'PressMs', 90), 0, 500);
+    Studio.PageMs := EnsureRange(ThemeIni.ReadInteger('Studio', 'PageMs', 220), 0, 500);
     if ThemeIni.ReadString('Theme', 'Name', '') <> '' then
     begin
 
@@ -2310,6 +2325,7 @@ end;
 
 procedure TTheme.ThemeLoadBasic(Theme: TThemeBasic; const Name: string);
 begin
+  Theme.StudioShell := ThemeIni.ReadBool(Name, 'StudioShell', false);
   ThemeLoadBackground(Theme.Background, Name);
   ThemeLoadTexts(Theme.Text, Name + 'Text');
   ThemeLoadStatics(Theme.Statics, Name + 'Static');
@@ -2483,6 +2499,7 @@ begin
   end;
 
   ThemeStatic.Tex := ReadString(SectionList, 'Tex', '');
+  ThemeStatic.Flat := ReadBool(SectionList, 'Flat', false);
   ThemeStatic.X := ReadInteger(SectionList, 'X', 0);
   ThemeStatic.Y := ReadInteger(SectionList, 'Y', 0);
   ThemeStatic.Z := ReadFloat  (SectionList, 'Z', 0);
@@ -2670,6 +2687,7 @@ begin
   ThemeButton.DColor := ReadString(SectionList, 'DColor', '');
 
   ThemeButton.Visible := ReadBool(SectionList, 'Visible', true);
+  ThemeButton.Flat := ReadBool(SectionList, 'Flat', false);
 
   //Fade Mod
   ThemeButton.SelectH := ReadInteger(SectionList, 'SelectH', ThemeButton.H);

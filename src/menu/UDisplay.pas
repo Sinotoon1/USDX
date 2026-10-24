@@ -128,6 +128,7 @@ type
 
       { called when left or right mousebutton is pressed or released }
       procedure OnMouseButton(Pressed: boolean);
+      procedure CancelPointerInput;
       { fades to specific screen (playing specified sound) }
       function FadeTo(Screen: PMenu; const aSound: TAudioPlaybackStream = nil): PMenu;
 
@@ -169,7 +170,7 @@ uses
   UText,
   StrUtils,
   UCommandLine,
-  UCoachCore,
+  UCoachCore, UIMotion, UStudioUI, UThemes,
   UGraphic,
   UIni,
   UImage,
@@ -302,9 +303,12 @@ var
   FadeStateSquare: real;
   FadeW, FadeH:    real;
   FadeCopyW, FadeCopyH: integer;
+  PageDuration: cardinal;
 
 begin
   Result := true;
+  PageDuration := FADE_DURATION;
+  if Theme.Studio.Enabled then PageDuration := Theme.Studio.PageMs;
 
   for S := 1 to Screens do
   begin
@@ -429,7 +433,10 @@ begin
         if (FadeStartTime = 0) then
           FadeStateSquare := 0 // for first screen if screens = 2
         else
-          FadeStateSquare := sqr((SDL_GetTicks - FadeStartTime) / FADE_DURATION);
+          if Theme.Studio.Enabled then
+            FadeStateSquare := StudioPageProgress(SDL_GetTicks, FadeStartTime, PageDuration)
+          else
+            FadeStateSquare := sqr(ElapsedTicks(SDL_GetTicks, FadeStartTime) / FADE_DURATION);
 
         if (FadeStateSquare < 1) then
         begin
@@ -446,6 +453,12 @@ begin
             TexY1 := (1-FadeStateSquare/2)*FadeH;
             TexX2 := (1-FadeStateSquare/2)*FadeW;
             TexY2 := (0+FadeStateSquare/2)*FadeH;
+            if Theme.Studio.Enabled then
+            begin
+              // Crossfade with a restrained outgoing shift; never crop/zoom text.
+              X := -12 * FadeStateSquare;
+              TexX1 := 0; TexX2 := FadeW; TexY1 := FadeH; TexY2 := 0;
+            end;
           end;
           Renderer.DepthTest := false;
           Renderer.DrawTexture(FadeTex[S-1]);
@@ -459,13 +472,14 @@ begin
         NextScreen.OnShow;
       end;
 
-      if ((FadeStartTime + FADE_DURATION < SDL_GetTicks) or
+      if ((ElapsedTicks(SDL_GetTicks, FadeStartTime) >= PageDuration) or
           (not FadeEnabled) or FadeFailed) and
          ((Screens = 1) or (S = 2)) then
       begin
         // fade out complete...
         FadeStartTime := 0;
         DoneOnShow := false;
+        CurrentScreen.CancelPointerInput;
         CurrentScreen.onHide;
         CurrentScreen.ShowFinish := false;
         CurrentScreen := NextScreen;
@@ -658,6 +672,7 @@ end;
 
 function TDisplay.ParseInput(PressedKey: cardinal; CharCode: UCS4Char; PressedDown : boolean): boolean;
 begin
+  if Theme.Studio.Enabled and assigned(NextScreen) then Exit(true);
   if (assigned(NextScreen)) then
     Result := NextScreen^.ParseInput(PressedKey, CharCode, PressedDown)
   else if (assigned(CurrentScreen)) then
@@ -668,6 +683,7 @@ end;
 
 function TDisplay.ParseMouse(MouseButton: integer; BtnDown: boolean; X, Y: integer): boolean;
 begin
+  if Theme.Studio.Enabled and assigned(NextScreen) then Exit(true);
   if (assigned(NextScreen)) then
     Result := NextScreen^.ParseMouse(MouseButton, BtnDown, X, Y)
   else
@@ -726,6 +742,19 @@ function TDisplay.NeedsCursorUpdate: boolean;
 begin
   Result := Cursor_Update and Cursor_Visible and not Cursor_Fade;
   Cursor_Update := false;
+end;
+
+procedure TDisplay.CancelPointerInput;
+begin
+  if assigned(CurrentScreen) then CurrentScreen.CancelPointerInput;
+  if assigned(NextScreen) then NextScreen.CancelPointerInput;
+  if assigned(ScreenPopupError) then ScreenPopupError.CancelPointerInput;
+  if assigned(ScreenPopupInfo) then ScreenPopupInfo.CancelPointerInput;
+  if assigned(ScreenPopupCheck) then ScreenPopupCheck.CancelPointerInput;
+  if assigned(ScreenPopupHelp) then ScreenPopupHelp.CancelPointerInput;
+  if assigned(ScreenPopupInsertUser) then ScreenPopupInsertUser.CancelPointerInput;
+  if assigned(ScreenPopupSendScore) then ScreenPopupSendScore.CancelPointerInput;
+  if assigned(ScreenPopupScoreDownload) then ScreenPopupScoreDownload.CancelPointerInput;
 end;
 
 procedure TDisplay.OnWindowResized();

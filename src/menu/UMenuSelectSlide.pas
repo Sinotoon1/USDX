@@ -34,7 +34,7 @@ interface
 {$I switches.inc}
 
 uses
-  UText,
+  UText, UIMotion,
   UMenuText,
   UMenuInteract,
   UMenuWidget,
@@ -46,6 +46,7 @@ type
   TSelectSlide = class(IMenuWidget)
     private
       SelectBool:       boolean;
+      FocusMotion: TUIMotion;
 
       function AdjustOptionTextToFit(OptText: UTF8String): UTF8String;
     public
@@ -78,6 +79,7 @@ type
       oneItemOnly: boolean;      //default is false
 
       //Visibility
+      Flat: boolean;
       Visible: boolean;
 
       ClickSelectsPosition: boolean;
@@ -179,6 +181,7 @@ const
 implementation
 
 uses
+  UStudioUI, UThemes, sdl2,
   math,
   SysUtils,
   UGraphic,
@@ -624,6 +627,14 @@ var
 begin
   if Visible then
   begin
+    if Flat then
+    begin
+      RetargetMotion(FocusMotion, Ord(SelectBool), SDL_GetTicks, StudioDuration(Theme.Studio.HoverMs));
+      StudioSelector(Texture, TextureSBG, MotionValue(FocusMotion, SDL_GetTicks), showArrows);
+      Text.Draw;
+      for SO := Low(TextOpt) to High(TextOpt) do TextOpt[SO].Draw;
+      Exit;
+    end;
     if SelectBool or not Colorized then
     begin
       Renderer.DrawTexture(Texture);
