@@ -1,5 +1,8 @@
 # Studio acceptance — 2026-10-24
 
+This is the prior warm-Studio increment. Current visual acceptance:
+[MiHome-inspired light cards](coach-mihome-validation.md).
+
 Runtime source: `1a38a72176d8901c392d64c46cd00cb74ac3078b` on
 `feature/practice-play-python`; baseline `14dcc69`. Subsequent acceptance-metadata
 changes do not change `src/`, `game/` or `tools/` runtime inputs.
