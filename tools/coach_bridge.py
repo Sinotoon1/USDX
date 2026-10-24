@@ -29,7 +29,26 @@ def header(value):
     return " ".join(str(value).split()).replace("\x00", "")
 
 
-def export_reference(job_dir, songs_root, title, artist, *, allow_unreviewed=False):
+def export_target(job, songs_root, lyrics_sha256=None):
+    name = "coach-" + job["song_id"] + "-" + job["job_id"]
+    if lyrics_sha256:
+        if not re.fullmatch("[0-9a-f]{64}", lyrics_sha256):
+            raise ValueError("invalid_lyrics_hash")
+        name += "-lyrics-" + lyrics_sha256[:16]
+    return Path(songs_root) / name
+
+
+def export_reference(
+    job_dir,
+    songs_root,
+    title,
+    artist,
+    *,
+    allow_unreviewed=False,
+    lyrics_path=None,
+    require_lyrics=False,
+    lyrics_sha256=None,
+):
     """Validate all inputs before atomically publishing a new immutable song."""
     job_dir, songs_root = Path(job_dir), Path(songs_root)
     job = json.loads((job_dir / "job.json").read_text(encoding="utf-8"))
@@ -82,6 +101,26 @@ def export_reference(job_dir, songs_root, title, artist, *, allow_unreviewed=Fal
             phrase_start = tick_start
         rows.append(f": {tick_start} {tick_end - tick_start} {midi - 60} la")
         previous = tick_end
+    lyrics, lyric_hash, lyric_lrc, alignment = None, None, None, None
+    if require_lyrics and lyrics_path is None:
+        raise ValueError("lyrics_required")
+    if lyrics_path is not None:
+        from coach_lyrics import align_words, read_lyrics, render_lrc
+
+        lyric_hash = lyrics_sha256 or digest(lyrics_path)
+        lyrics = read_lyrics(lyrics_path, job, duration, expected_hash=lyric_hash)
+        chart, alignment = align_words(notes, lyrics["words"], duration)
+        lyric_lrc = render_lrc(lyrics["words"])
+        rows, previous, phrase_start = [], -1, 0
+        for row in chart:
+            start, end = row["start_tick"], row["end_tick"]
+            if rows and (start - previous >= 35 or start - phrase_start >= 500):
+                rows.append(f"- {previous}")
+                phrase_start = start
+            rows.append(
+                f"{row['kind']} {start} {end - start} {row['midi'] - 60} {row['text']}"
+            )
+            previous = end
     for key in ("song_id", "job_id"):
         if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", job[key]):
             raise ValueError("invalid_reference_id")
@@ -100,7 +139,7 @@ def export_reference(job_dir, songs_root, title, artist, *, allow_unreviewed=Fal
         ".webm",
     }:
         raise ValueError("unsupported_source_extension")
-    target = songs_root / ("coach-" + job["song_id"] + "-" + job["job_id"])
+    target = export_target(job, songs_root, lyric_hash)
     if target.exists():
         raise FileExistsError(target)
     songs_root.mkdir(parents=True, exist_ok=True)
@@ -111,10 +150,14 @@ def export_reference(job_dir, songs_root, title, artist, *, allow_unreviewed=Fal
         for name in ("vocals.wav", "instrumental.wav", "pitch.json"):
             shutil.copyfile(job_dir / name, stage / name)
         expected = {**job["artifacts"], audio: job["source_sha256"]}
-        if any(
-            digest(stage / name) != expected[name]
-            for name in (audio, "vocals.wav", "instrumental.wav", "pitch.json")
-        ):
+        if lyrics is not None:
+            shutil.copyfile(lyrics_path, stage / "lyrics.json")
+            (stage / "lyrics.lrc").write_text(lyric_lrc, encoding="utf-8", newline="\n")
+            expected["lyrics.json"] = lyric_hash
+            expected["lyrics.lrc"] = hashlib.sha256(
+                lyric_lrc.encode("utf-8")
+            ).hexdigest()
+        if any(digest(stage / name) != expected[name] for name in expected):
             raise ValueError("artifact_changed_during_export")
         status = "reviewed" if reviewed else "auto"
         text = "\n".join(
@@ -146,10 +189,16 @@ def export_reference(job_dir, songs_root, title, artist, *, allow_unreviewed=Fal
             "model_sha256": job["model_sha256"],
             "source_sha256": job["source_sha256"],
             "tick_seconds": 0.01,
-            "note_count": len(notes),
-            "lyrics": "placeholder_la_not_transcribed",
+            "note_count": alignment["chart_note_count"] if alignment else len(notes),
+            "lyrics": "asr_dtw_word_alignment"
+            if lyrics
+            else "placeholder_la_not_transcribed",
             "files": {p.name: digest(p) for p in stage.iterdir()},
         }
+        if lyrics is not None:
+            manifest["lyrics_alignment"] = alignment
+            manifest["lyrics_model_sha256"] = lyrics["model_sha256"]
+            manifest["lyrics_review_status"] = "reviewed" if reviewed else "auto"
         (stage / "coach.json").write_text(
             json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
         )
