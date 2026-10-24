@@ -19,6 +19,7 @@ type
     procedure Paste;
     function ErrorText(const Code: UTF8String): UTF8String;
   public
+    InputModifiers: word;
     constructor Create; override;
     destructor Destroy; override;
     procedure OnShow; override;
@@ -284,12 +285,12 @@ var Value: UTF8String; Chars: UCS4String;
 begin
   Result := true;
   if not PressedDown then Exit;
-  if (PressedKey = SDLK_v) and ((SDL_GetModState and KMOD_CTRL) <> 0) then begin Paste; Exit; end;
+  if (PressedKey = SDLK_v) and ((InputModifiers and KMOD_CTRL) <> 0) then begin Paste; Exit; end;
   if Editing >= 0 then
   begin
     if PressedKey in [SDLK_RETURN, SDLK_ESCAPE] then begin EndEditing; Exit; end;
     if Editing = 1 then Value := SongTitle else Value := Artist;
-    if (PressedKey = SDLK_a) and ((SDL_GetModState and KMOD_CTRL) <> 0) then Value := ''
+    if (PressedKey = SDLK_a) and ((InputModifiers and KMOD_CTRL) <> 0) then Value := ''
     else if PressedKey = SDLK_BACKSPACE then
     begin Chars := UTF8ToUCS4String(Value); if Length(Chars) > 0 then SetLength(Chars, Length(Chars)-1);
       Value := UCS4ToUTF8String(Chars); end

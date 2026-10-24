@@ -548,8 +548,14 @@ begin
           if not Assigned(Display.NextScreen) then
           begin //drop input when changing screens
             KeyCharUnicode:=0;
-            if (Event.type_ = SDL_TEXTINPUT) and Assigned(ScreenCoachImport) and
+            if (Event.type_ = SDL_KEYDOWN) and Assigned(ScreenCoachImport) and
               (Display.CurrentScreen^ = ScreenCoachImport) then
+              ScreenCoachImport.InputModifiers := Event.key.keysym._mod;
+            if (Event.type_ = SDL_TEXTINPUT) and Assigned(ScreenCoachImport) and
+              (Display.CurrentScreen^ = ScreenCoachImport) and
+              not ScreenPopupError.Visible and not ScreenPopupInfo.Visible and
+              not ScreenPopupCheck.Visible and not ScreenPopupHelp.Visible and
+              not ScreenPopupInsertUser.Visible then
             begin
               ScreenCoachImport.InsertText(UTF8String(Event.text.text));
               Continue;

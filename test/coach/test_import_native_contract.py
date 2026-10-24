@@ -8,6 +8,16 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class ImportNativeContracts(unittest.TestCase):
+    def test_shortcuts_use_event_modifiers_not_the_already_released_global_state(self):
+        source = (ROOT / "src/base/UMain.pas").read_text(encoding="utf-8")
+        screen = (ROOT / "src/screens/UScreenCoachImport.pas").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            "ScreenCoachImport.InputModifiers := Event.key.keysym._mod", source
+        )
+        self.assertNotIn("SDL_GetModState", screen)
+
     def test_windows_picker_uses_an_explicit_wide_record_abi(self):
         source = (ROOT / "src/base/UCoachImport.pas").read_text(encoding="utf-8")
         self.assertIn("ImportOpenFileName(var Info: TOpenFilenameW)", source)
