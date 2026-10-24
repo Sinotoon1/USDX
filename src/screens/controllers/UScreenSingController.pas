@@ -1726,7 +1726,7 @@ begin
   if Length(AudioInputProcessor.Sound) = 0 then Exit;
   Sound := AudioInputProcessor.Sound[0];
   if not Assigned(Sound) then Exit;
-  if not Assigned(Sound.AudioFormat) then
+  if not Sound.CaptureActive then
   begin
     fCoachGate.Reset;
     fCoachTarget := -1;

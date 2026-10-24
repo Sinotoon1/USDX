@@ -14,7 +14,7 @@ def generate(root: Path) -> Path:
     body = (root / "test/coach/coach_capture_test.pas").read_text(encoding="utf-8")
     body = body[body.index("\nvar\n") :]
     # Math is used by the fixture; all application units keep their build order.
-    uses = uses.replace("  SysUtils;", "  Math, SysUtils;")
+    uses = uses.replace("  SysUtils;", "  Classes, Math, SysUtils;")
     target = root / "src/coach_capture_runtime.dpr"
     target.write_text(
         "program coach_capture_runtime;\n{$mode delphi}\n{$I switches.inc}\n"

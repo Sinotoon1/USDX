@@ -19,8 +19,11 @@ class CaptureContracts(unittest.TestCase):
         )
         stop = source.split("procedure TCaptureBuffer.StopCapture();", 1)[1]
         stop = stop.split("{ TAudioInputProcessor }", 1)[0]
-        self.assertIn("FreeAndNil(fAudioFormat)", stop)
+        self.assertIn("fCaptureActive := false", stop)
+        self.assertNotIn("FreeAndNil(fAudioFormat)", stop)
         self.assertIn("ClearAnalysis;", stop)
+        log = (ROOT / "src/base/ULog.pas").read_text(encoding="utf-8")
+        self.assertIn("if not Assigned(FormatInfo) or not Assigned(Buffer) then", log)
 
     def test_failed_device_start_unlinks_capture_buffers(self):
         source = (ROOT / "src/base/URecord.pas").read_text(encoding="utf-8")

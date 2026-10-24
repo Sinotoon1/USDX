@@ -2,12 +2,17 @@ program coach_capture_test;
 {$mode delphi}
 uses
   {$ifdef unix}cthreads,{$endif}
-  SysUtils, Math, SDL2, URecord, UMusic, UIni, UCoachCore, UCommandLine, UNote;
+  Classes, SysUtils, Math, SDL2, URecord, UMusic, UIni, UCoachCore, UCommandLine, UNote,
+  ULog, UPath, UPathUtils;
 var
   Buffer: TCaptureBuffer;
   Device: TAudioInputDevice;
   Input: TAudioInputBase;
   Samples: array[0..4095] of SmallInt;
+  SavedSamples: array[0..4095] of SmallInt;
+  RecordingDir: String;
+  Wave: TFileStream;
+  Rate: Cardinal;
   I: Integer;
 procedure Check(Value: Boolean; const Message: String);
 begin
@@ -42,6 +47,11 @@ begin
   Ini := TIni.Create;
   Params := TCMDParams.Create;
   Params.Debug := false;
+  Log := TLog.Create;
+  RecordingDir := IncludeTrailingPathDelimiter(GetTempDir) +
+    'usdx-capture-' + IntToStr(GetTickCount64) + PathDelim;
+  ForceDirectories(RecordingDir);
+  LogPath := Path(RecordingDir);
   Buffer := TCaptureBuffer.Create;
   Device := TTestInputDevice.Create;
   Input := TTestInput.Create;
@@ -54,6 +64,9 @@ begin
     Check(not Buffer.ToneValid and not Buffer.CoachPitch.Valid,
       'missing microphone produces no pitch');
     Writeln('PASS no microphone: AnalyzeBuffer returns without format or pitch');
+    Log.LogVoice(0);
+    Check(not FileExists(RecordingDir+'Voice0001.wav'),
+      'no microphone saves no invented recording');
     CoachMode := cmPlay;
     Buffer.AnalyzeBuffer;
     Check(not Buffer.ToneValid, 'play mode also tolerates no input');
@@ -75,13 +88,13 @@ begin
     Check(not Buffer.ToneValid and not Buffer.CoachPitch.Valid,
       'new song clears old pitch validity');
     Device.LinkCaptureBuffer(0, nil);
-    Check(not Assigned(Buffer.AudioFormat), 'stopped input releases capture format');
+    Check(not Buffer.CaptureActive, 'stopped input is inactive');
     CoachMode := cmPractice;
     SDL_Delay(45);
     Buffer.AnalyzeBuffer;
     Check(not Buffer.ToneValid and not Buffer.CoachPitch.Valid,
       'disconnected input never reuses a stale pitch');
-    Writeln('PASS disconnected input: no stale format, tone or coach pitch');
+    Writeln('PASS disconnected input: inactive, no stale tone or coach pitch');
 
     // The device was enumerated/configured but opening it now fails.
     PlayersPlay := 1;
@@ -93,8 +106,8 @@ begin
     Device.CfgIndex := 0;
     Input.CaptureStart;
     Check(not Assigned(Device.CaptureChannel[0]), 'failed start unlinks the channel');
-    Check(not Assigned(AudioInputProcessor.Sound[0].AudioFormat),
-      'failed start leaves no usable capture format');
+    Check(not AudioInputProcessor.Sound[0].CaptureActive,
+      'failed start leaves no active capture');
     AudioInputProcessor.Sound[0].AnalyzeBuffer;
     Check(not AudioInputProcessor.Sound[0].CoachPitch.Valid,
       'failed start never supplies a pitch');
@@ -114,20 +127,37 @@ begin
     Input.CaptureStop;
     Check(AudioInputProcessor.Sound[0].LogBuffer.Size = SizeOf(Samples),
       'stopping preserves the recording for Finish/LogVoice');
-    Check(not Assigned(AudioInputProcessor.Sound[0].AudioFormat) and
+    Check(Assigned(AudioInputProcessor.Sound[0].AudioFormat),
+      'recording format remains available to LogVoice after stop');
+    Log.LogVoice(0);
+    Wave := TFileStream.Create(RecordingDir+'Voice0001.wav', fmOpenRead);
+    try
+      Check(Wave.Size = 44+SizeOf(Samples), 'saved WAV includes all recorded samples');
+      Wave.Position := 24;
+      Wave.ReadBuffer(Rate, SizeOf(Rate));
+      Check(Rate = 44100, 'saved WAV retains capture sample rate');
+      Wave.Position := 44;
+      Wave.ReadBuffer(SavedSamples[0], SizeOf(SavedSamples));
+      Check(CompareMem(@SavedSamples[0], @Samples[0], SizeOf(Samples)),
+        'saved WAV retains the actual PCM bytes');
+    finally
+      Wave.Free;
+    end;
+    Check(not AudioInputProcessor.Sound[0].CaptureActive and
       not AudioInputProcessor.Sound[0].CoachPitch.Valid,
       'capture stop invalidates all input state');
     Writeln('PASS retry: real PCM buffer detects 440 Hz; stopping clears pitch');
     AudioInputProcessor.Sound[0].Clear;
     Check(AudioInputProcessor.Sound[0].LogBuffer.Size = 0,
       'starting a new session clears the old recording');
-    Writeln('PASS recording: stop preserves LogVoice data; next session clears it');
+    Writeln('PASS recording: stopped capture saves exact 44100 Hz WAV; next session clears it');
     SetLength(AudioInputProcessor.DeviceList, 0);
   finally
     Input.Free;
     Device.Free;
     Buffer.Free;
     FreeAndNil(Params);
+    FreeAndNil(Log);
     FreeAndNil(Ini);
     SDL_Quit;
   end;

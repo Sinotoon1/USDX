@@ -65,6 +65,7 @@ type
       fCoachCaptureTick: Cardinal;
       fCoachDebugTick: Cardinal;
       fAudioFormat: TAudioFormatInfo;
+      fCaptureActive: boolean;
       Frequencies: TFrequencyArray;
       Delays: TDelayArray;
 
@@ -112,6 +113,7 @@ type
       function MaxSampleVolume: single;
       property ToneString: string READ GetToneString;
       property AudioFormat: TAudioFormatInfo READ fAudioFormat;
+      property CaptureActive: boolean READ fCaptureActive;
   end;
 
 const
@@ -397,6 +399,11 @@ begin
 
   LockAnalysisBuffer();
   try
+    if not CaptureActive then
+    begin
+      CoachPitch.Valid := false;
+      Exit;
+    end;
     // Player buffers exist even when no microphone was assigned or opened.
     // Practice pitch detection must not dereference a missing capture format.
     if not Assigned(AudioFormat) then
@@ -647,13 +654,15 @@ begin
     // TODO: map odd players to the left and even players to the right speaker
     fVoiceStream := AudioPlayback.CreateVoiceStream(CHANNELMAP_FRONT, fAudioFormat);
   end;
+  fCaptureActive := true;
 end;
 
 procedure TCaptureBuffer.StopCapture();
 begin
+  fCaptureActive := false;
   FreeAndNil(fVoiceStream);
-  FreeAndNil(fAudioFormat);
-  // Finish dumps LogBuffer after CaptureStop when SavePlayback is enabled.
+  // Finish needs both the recording and its format after CaptureStop.
+  // CaptureActive, not the presence of retained metadata, controls analysis.
   ClearAnalysis;
 end;
 

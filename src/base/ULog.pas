@@ -477,6 +477,11 @@ begin
   CaptureBuffer := AudioInputProcessor.Sound[SoundNr];
   Buffer := CaptureBuffer.LogBuffer;
   FormatInfo := CaptureBuffer.AudioFormat;
+  // No microphone / failed open has no recording or format to serialize.
+  if not Assigned(FormatInfo) or not Assigned(Buffer) then
+    Exit;
+  if Buffer.Size = 0 then
+    Exit;
 
   // not all formats can be stored in a wav-file
   UseWavFile := (FormatInfo.Format in [asfU8, asfS16, asfS16LSB]);
