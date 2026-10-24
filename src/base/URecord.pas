@@ -281,6 +281,7 @@ begin
   LogBuffer := TMemoryStream.Create;
   fAnalysisBufferLock := SDL_CreateMutex();
   AnalysisBufferSize := Length(AnalysisBuffer);
+  Clear;
 end;
 
 destructor TCaptureBuffer.Destroy;
@@ -310,6 +311,12 @@ begin
     LogBuffer.Clear;
   LockAnalysisBuffer();
   FillChar(AnalysisBuffer[0], Length(AnalysisBuffer) * SizeOf(SmallInt), 0);
+  FillChar(CoachPitch, SizeOf(CoachPitch), 0);
+  CoachPitchTick := 0;
+  fCoachCaptureTick := 0;
+  ToneValid := false;
+  ToneAbs := -1;
+  Tone := -1;
   UnlockAnalysisBuffer();
 end;
 
@@ -384,6 +391,18 @@ begin
 
   LockAnalysisBuffer();
   try
+    // Player buffers exist even when no microphone was assigned or opened.
+    // Practice pitch detection must not dereference a missing capture format.
+    if not Assigned(AudioFormat) then
+    begin
+      CoachPitch.Valid := false;
+      Exit;
+    end;
+    if AudioFormat.SampleRate <= 0 then
+    begin
+      CoachPitch.Valid := false;
+      Exit;
+    end;
 
     // find maximum volume across the analysis buffer
     MaxVolume := 0;
@@ -627,6 +646,8 @@ end;
 procedure TCaptureBuffer.StopCapture();
 begin
   FreeAndNil(fVoiceStream);
+  FreeAndNil(fAudioFormat);
+  Clear;
 end;
 
 { TAudioInputProcessor }
@@ -993,7 +1014,13 @@ begin
     if (DeviceUsed) then
     begin
       //Log.BenchmarkStart(2);
-      Device.Start();
+      if not Device.Start() then
+      begin
+        // A configured device may have disappeared since enumeration. Do not
+        // leave its player buffers looking connected after an open failure.
+        for ChannelIndex := 0 to High(Device.CaptureChannel) do
+          Device.LinkCaptureBuffer(ChannelIndex, nil);
+      end;
       //Log.BenchmarkEnd(2);
       //Log.LogBenchmark('Device.Start', 2) ;
     end;

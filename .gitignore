@@ -74,3 +74,5 @@ ppaslink.sh
 __pycache__/
 *.pyc
 game/songs/coach-*/
+/src/coach_capture_runtime.dpr
+/coach-capture-bin/

@@ -65,6 +65,19 @@ jobs:
           export FPCDIR=/c/FPC/3.2.2
           export FPCMAKE=/c/FPC/3.2.2/bin/i386-win32/fpcmake
           ./autogen.sh && ./configure && make
+      - name: Real capture buffer no-microphone regression
+        shell: msys2 {0}
+        run: |
+          export PATH="$PWD/game:/usr/bin:/mingw64/bin:/c/FPC/3.2.2/bin:/c/FPC/3.2.2/bin/i386-win32:$PATH"
+          export FPCCFG=/c/FPC/3.2.2/bin/i386-win32/fpc.cfg
+          export FPCDIR=/c/FPC/3.2.2
+          python test/coach/build_capture_project.py "$PWD"
+          mkdir -p coach-capture-bin
+          cd src
+          fpc -Cn -Twin64 -Px86_64 -Si -Sg- -Sc- -Ciro -gl -Xs- -O2 -FU../coach-capture-bin -o../coach-capture-bin/coach_capture_runtime.exe coach_capture_runtime.dpr
+          fpc -Twin64 -Px86_64 -Si -Sg- -Sc- -Ciro -gl -Xs- -O2 -FU../coach-capture-bin -o../coach-capture-bin/coach_capture_runtime.exe coach_capture_runtime.dpr
+          cd ../game
+          ../coach-capture-bin/coach_capture_runtime.exe
       - uses: actions/upload-artifact@v6
         with:
           name: USDX-Coach-windows-portable

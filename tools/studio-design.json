@@ -221,6 +221,14 @@
     }
   },
   "copy": {
+    "COACH_NO_MIC": [
+      "未检测到麦克风 · 可继续试听练习",
+      "No microphone · listening practice is available"
+    ],
+    "COACH_NO_MIC_HELP": [
+      "请在设置 → 录音中连接并分配玩家 1；当前不判断音准。",
+      "Connect a microphone in Settings > Recording and assign Player 1. Pitch feedback is off."
+    ],
     "STUDIO_BRAND": [
       "声乐练习室",
       "Vocal Studio"

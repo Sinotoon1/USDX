@@ -782,7 +782,7 @@ begin
   Text[screenSingViewRef.SongNameText].Visible := false;
 
   BadPlayer := AudioInputProcessor.CheckPlayersConfig(PlayersPlay);
-  if (BadPlayer <> 0) and CheckPlayerConfigOnNextSong then
+  if (BadPlayer <> 0) and CheckPlayerConfigOnNextSong and (CoachMode <> cmPractice) then
   begin
     ScreenPopupError.ShowPopup(
         Format(Language.Translate('ERROR_PLAYER_NO_DEVICE_ASSIGNMENT'),
@@ -1726,6 +1726,15 @@ begin
   if Length(AudioInputProcessor.Sound) = 0 then Exit;
   Sound := AudioInputProcessor.Sound[0];
   if not Assigned(Sound) then Exit;
+  if not Assigned(Sound.AudioFormat) then
+  begin
+    fCoachGate.Reset;
+    fCoachTarget := -1;
+    fCoachTick := High(cardinal);
+    CoachStatus('COACH_NO_MIC', 'CoachMuted');
+    Text[fCoachMetrics].Text := Language.Translate('COACH_NO_MIC_HELP');
+    Exit;
+  end;
   if Sound.CoachPitchTick = fCoachTick then Exit;
   fCoachTick := Sound.CoachPitchTick;
   CoachStatus('COACH_WAIT', 'CoachMuted');
