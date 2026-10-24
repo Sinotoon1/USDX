@@ -7,8 +7,8 @@ configurations use Chinese, Studio + Studio skin, and the list song catalogue.
 Saved language/theme/catalogue and audio settings keep precedence. Deluxe and
 Modern remain selectable and retain their legacy renderer/input behavior.
 
-All Studio surfaces are light, including practice and play: warm near-white
-canvas, white panels, dark text and restrained green focus/action accents. Song
+All Studio surfaces are light, including practice and play: cool gray
+canvas, white panels, dark text and teal focus/action accents. Song
 covers, avatars and optional song video remain real content, not theme chrome.
 The home screen has two mode entries and direct library, statistics, editor and
 settings actions. Player initialization is retained before entering songs.
@@ -47,7 +47,7 @@ not exceed 1; the practice panel remains at 0.99.
 
 ## Motion and interaction
 
-- Hover: 160ms; press/release feedback: 90ms; page crossfade/12-unit shift: 220ms.
+- Hover: 160ms; press/release feedback: 90ms; page crossfade/12-unit shift: 180ms.
 - Smoothstep uses elapsed SDL ticks, not frame count; reversal starts from the
   current interpolated value. A long frame finishes rather than prolonging it.
 - `Advanced / ScreenFade=Off` also disables all new microanimations immediately.
@@ -55,6 +55,25 @@ not exceed 1; the practice panel remains at 0.99.
 - A transition cancels capture and rejects input to an unshown next page.
 - Focus includes an outline/inset and pitch states include translated words;
   color alone does not carry the state.
+
+## MiHome-Windows direction
+
+The user's reference is pinned to
+[MiHome-Windows b3b3b3f](https://github.com/huanyuejue/MiHome-Windows/tree/b3b3b3f5605a0494884c5e4c4d82bd6a10b54cdb/app/ui).
+The light palette, compact header, white 14-unit rounded cards, circular teal
+actions and short transitions inform this native implementation. No Qt runtime
+or reference service layer is added to USDX. See `SPEC-ui-mihome.md`.
+
+The two modes are equal-width cards; the tool area uses two columns, not a
+sidebar or decorative tabs. Each mode has one interactive target: `Action=1`
+paints a circular forward affordance through the existing button renderer.
+The field defaults to false and is gated by Studio. Selection/hit geometry is
+unchanged. `StudioAction` is the bright teal fill; `StudioAccent` is deliberately
+darker for readable small text and focus outlines. `StudioOnAction` is dark ink.
+
+The generator now updates the owned Studio copy keys in the Chinese/English
+`[Text]` sections as well as the native theme. Other translations, comments and
+sections remain intact. `--check` also catches stale live translations.
 
 ## Window and localization
 

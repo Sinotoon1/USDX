@@ -170,6 +170,7 @@ type
 
   TThemeButton = record
     Flat: boolean;
+    Action: boolean; // Optional circular navigation affordance for Studio cards.
     Text:   AThemeText;
     X:      integer;
     Y:      integer;
@@ -2690,6 +2691,7 @@ begin
 
   ThemeButton.Visible := ReadBool(SectionList, 'Visible', true);
   ThemeButton.Flat := ReadBool(SectionList, 'Flat', false);
+  ThemeButton.Action := ReadBool(SectionList, 'Action', false);
 
   //Fade Mod
   ThemeButton.SelectH := ReadInteger(SectionList, 'SelectH', ThemeButton.H);

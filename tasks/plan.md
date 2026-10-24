@@ -1,5 +1,10 @@
 # Studio UI 重写计划
 
+## MiHome-Windows 风格迭代（2026-10-24）
+规格：`SPEC-ui-mihome.md`。顺序：固定参考与原组件离屏检查 → 当前 Studio
+基线与哈希备份 → 新契约 RED → token / 等宽卡片 / 原生 Action 标记 →
+生成与原生交互检查 → Windows 构建与可执行包 → 副本回滚与交付记录。
+
 采用现有 Pascal/SDL/OpenGL 渲染器和音频链，单独增加 Studio 主题与兼容性开关。
 ui-motion → ui-system → ui-flows；规格见根目录对应 SPEC 文件。
 

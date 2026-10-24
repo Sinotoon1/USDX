@@ -137,6 +137,10 @@ class StudioContracts(unittest.TestCase):
             ("StudioFlat", "StudioStage"),
             ("StudioSharp", "StudioStage"),
             ("StudioClose", "StudioStage"),
+            ("StudioOnAction", "StudioAction"),
+            ("StudioOnAction", "StudioAccentHover"),
+            ("StudioAccent", "StudioCanvas"),
+            ("StudioMuted", "StudioCanvas"),
         ):
             a, b = sorted((luminance(colors[ink]), luminance(colors[paper])))
             self.assertGreaterEqual((b + 0.05) / (a + 0.05), 4.5, ink)

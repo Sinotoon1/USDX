@@ -1,23 +1,23 @@
 {
   "spacing": 8,
-  "radius": 8,
+  "radius": 14,
   "motion": {
     "HoverMs": 160,
     "PressMs": 90,
-    "PageMs": 220
+    "PageMs": 180
   },
   "type": {
-    "hero": 42,
-    "title": 36,
-    "mode": 32,
-    "body": 22,
-    "label": 24,
+    "hero": 32,
+    "title": 32,
+    "mode": 28,
+    "body": 20,
+    "label": 22,
     "small": 18
   },
   "colors": {
     "StudioCanvas": [
-      246,
-      248,
+      242,
+      243,
       245
     ],
     "StudioSurface": [
@@ -26,39 +26,39 @@
       255
     ],
     "StudioInk": [
-      28,
-      40,
-      34
+      23,
+      24,
+      28
     ],
     "StudioMuted": [
-      83,
-      99,
-      89
+      107,
+      109,
+      118
     ],
     "StudioAccent": [
-      30,
-      94,
-      73
+      20,
+      111,
+      94
     ],
     "StudioAccentHover": [
-      38,
-      112,
-      86
+      96,
+      199,
+      180
     ],
     "StudioSoft": [
-      224,
-      239,
-      229
+      220,
+      244,
+      239
     ],
     "StudioBorder": [
-      210,
-      222,
-      214
+      213,
+      216,
+      223
     ],
     "StudioStage": [
       246,
-      248,
-      245
+      247,
+      249
     ],
     "StudioStageSurface": [
       255,
@@ -66,14 +66,14 @@
       255
     ],
     "StudioStageText": [
-      28,
-      40,
-      34
+      23,
+      24,
+      28
     ],
     "StudioStageMuted": [
-      83,
-      99,
-      89
+      107,
+      109,
+      118
     ],
     "StudioSharp": [
       163,
@@ -94,6 +94,31 @@
       155,
       104,
       21
+    ],
+    "StudioAction": [
+      61,
+      187,
+      164
+    ],
+    "StudioOnAction": [
+      11,
+      11,
+      14
+    ],
+    "StudioHover": [
+      244,
+      245,
+      247
+    ],
+    "StudioInset": [
+      238,
+      240,
+      243
+    ],
+    "StudioChrome": [
+      236,
+      236,
+      239
     ]
   },
   "layout": {
@@ -101,20 +126,20 @@
     "contentWidth": 720,
     "homePractice": [
       40,
-      176,
-      440,
-      184
+      168,
+      352,
+      152
     ],
     "homePlay": [
-      496,
-      176,
-      264,
-      184
-    ],
-    "secondaryY": 416,
-    "secondarySize": [
+      408,
       168,
-      48
+      352,
+      152
+    ],
+    "secondaryY": 372,
+    "secondarySize": [
+      352,
+      64
     ],
     "settingsArea": [
       40,
@@ -147,7 +172,9 @@
       154,
       448,
       272
-    ]
+    ],
+    "secondaryColumns": 2,
+    "secondaryGap": 16
   },
   "copy": {
     "STUDIO_BRAND": [
@@ -159,20 +186,20 @@
       "Arrows Select  ·  Enter Confirm  ·  Esc Back"
     ],
     "STUDIO_HOME": [
-      "把每一句，唱得更准",
-      "Find your voice, one phrase at a time"
+      "我的练唱",
+      "My studio"
     ],
     "STUDIO_SUBTITLE": [
-      "从一句开始，听见自己的进步。",
-      "Start small. Hear your progress."
+      "选择练习方式，开始今天的演唱。",
+      "Choose a mode. Make time for your voice."
     ],
     "STUDIO_PRACTICE_BODY": [
-      "逐句循环 · 实时音准反馈\n练准一句，再完成整首歌",
-      "Phrase loops and live pitch feedback\nBuild confidence before the full song"
+      "逐句循环 · 实时音准反馈\n练准一句，再唱整首",
+      "Phrase loops + pitch feedback\nBuild up to a complete song"
     ],
     "STUDIO_PLAY_BODY": [
-      "完整跟唱，挑战得分\n保留原版评分与结算",
-      "Sing a full song\nKeep the classic scoring"
+      "完整跟唱 · 挑战歌曲得分\n保留原版评分与结算",
+      "Full songs + classic scoring\nSee results after every take"
     ],
     "STUDIO_PRACTICE_ACTION": [
       "F6  开始练习",
@@ -183,23 +210,23 @@
       "F5  Start playing"
     ],
     "STUDIO_IMPORT": [
-      "导入歌曲：先在 Python 教唱程序提取人声、确认音高，再导出歌包。",
-      "Import: separate vocals and review pitch in the Python coach, then export a song pack."
+      "歌曲导入 · 在 Python 教唱程序完成预处理后导出歌包。",
+      "Import songs from the Python coach after vocal separation and pitch review."
     ],
     "STUDIO_LIBRARY": [
-      "选择一首歌",
-      "Choose a song"
+      "我的曲库",
+      "My library"
     ],
     "STUDIO_LIBRARY_HINT": [
       "单击选曲 · 双击或 Enter 开始 · J 搜索 · M 更多操作",
       "Click to select · Double-click or Enter to start · J Search · M More"
     ],
     "STUDIO_SETTINGS": [
-      "设置你的工作室",
-      "Make it your studio"
+      "设置",
+      "Settings"
     ],
     "STUDIO_PROFILE": [
-      "准备好你的声音",
+      "演唱准备",
       "Get ready to sing"
     ],
     "STUDIO_PROFILE_HINT": [
@@ -207,8 +234,8 @@
       "Choose your player and difficulty, then open the library."
     ],
     "STUDIO_RESULT": [
-      "这一遍，完成了",
-      "That is a wrap"
+      "演唱结果",
+      "Song results"
     ],
     "STUDIO_READY": [
       "随时开始下一遍",
@@ -245,6 +272,31 @@
     "STUDIO_PLAY_HINT": [
       "跟随音符与歌词，完整唱完这一首。  ·  P 暂停  ·  Esc 返回",
       "Follow the notes and lyrics.  ·  P Pause  ·  Esc Back"
+    ],
+    "STUDIO_TOOLS": [
+      "更多功能",
+      "More tools"
+    ],
+    "STUDIO_TOOL_JUKEBOX": [
+      "浏览歌单，聆听歌曲",
+      "Browse playlists and listen"
+    ],
+    "STUDIO_TOOL_STATS": [
+      "查看历史得分与排行",
+      "Scores and rankings"
+    ],
+    "STUDIO_TOOL_EDITOR": [
+      "转换与管理歌曲文件",
+      "Convert song files"
+    ],
+    "STUDIO_TOOL_OPTIONS": [
+      "声音、显示与麦克风",
+      "Audio, display and microphone"
     ]
+  },
+  "reference": {
+    "project": "MiHome-Windows",
+    "commit": "b3b3b3f5605a0494884c5e4c4d82bd6a10b54cdb",
+    "direction": "light desktop cards; native USDX implementation"
   }
 }

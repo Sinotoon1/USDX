@@ -10,7 +10,7 @@ function StudioDuration(DurationMs: cardinal): cardinal;
 function StudioPageProgress(NowTick, StartTick, DurationMs: cardinal): double;
 procedure StudioRoundRect(X, Y, Z, W, H, Radius: single; const Color: TRGB; Alpha: single);
 procedure StudioButton(const Texture: TTexture; const Normal, Hover: TRGB;
-  Focus, Press: single; Enabled: boolean);
+  Focus, Press: single; Enabled, Action: boolean);
 procedure StudioSelector(const Texture, Values: TTexture; Focus: single; Arrows: boolean);
 procedure StudioShell;
 
@@ -82,10 +82,10 @@ begin
 end;
 
 procedure StudioButton(const Texture: TTexture; const Normal, Hover: TRGB;
-  Focus, Press: single; Enabled: boolean);
+  Focus, Press: single; Enabled, Action: boolean);
 var
-  Fill, Border: TRGB;
-  Inset, Stroke, Alpha: single;
+  Fill, Border, Ink: TRGB;
+  Inset, Stroke, Alpha, CX, CY: single;
 begin
   Fill.R := Normal.R + (Hover.R - Normal.R) * Focus;
   Fill.G := Normal.G + (Hover.G - Normal.G) * Focus;
@@ -101,6 +101,18 @@ begin
   StudioRoundRect(Texture.X + Inset + Stroke, Texture.Y + Inset + Stroke, Texture.Z,
     Texture.W - 2 * (Inset + Stroke), Texture.H - 2 * (Inset + Stroke),
     Theme.Studio.Radius - Stroke, Fill, Alpha);
+  if Action and (Texture.W >= 96) and (Texture.H >= 64) then
+  begin
+    // Paint only: the parent card remains the single keyboard/pointer target.
+    CX := Texture.X + Texture.W - 36 + Inset;
+    CY := Texture.Y + 36 + Inset;
+    StudioRoundRect(CX - 16, CY - 16, Texture.Z, 32, 32, 16,
+      StudioColor('StudioAction'), Alpha);
+    Ink := StudioColor('StudioOnAction');
+    Renderer.DrawLine(CX - 5, CY, CX + 5, CY, Texture.Z, 1.7, Ink.R, Ink.G, Ink.B, Alpha);
+    Renderer.DrawLine(CX + 1, CY - 4, CX + 5, CY, Texture.Z, 1.7, Ink.R, Ink.G, Ink.B, Alpha);
+    Renderer.DrawLine(CX + 5, CY, CX + 1, CY + 4, Texture.Z, 1.7, Ink.R, Ink.G, Ink.B, Alpha);
+  end;
 end;
 
 procedure StudioSelector(const Texture, Values: TTexture; Focus: single; Arrows: boolean);
@@ -119,7 +131,7 @@ begin
     Values.X + Values.W - Texture.X - Stroke * 2, Max(Texture.H, Values.H) - Stroke * 2,
     Theme.Studio.Radius - Stroke, Fill, Texture.Alpha);
   StudioRoundRect(Values.X + 2, Values.Y + 3, Texture.Z, Values.W - 5, Values.H - 6,
-    Theme.Studio.Radius - 2, StudioColor('StudioSoft'), Texture.Alpha);
+    Theme.Studio.Radius - 2, StudioColor('StudioInset'), Texture.Alpha);
   if Arrows then
   begin
     MidY := Values.Y + Values.H / 2;
@@ -144,10 +156,11 @@ var
   Border: TRGB;
 begin
   Border := StudioColor('StudioBorder');
-  Renderer.DrawQuad(40, 50, 0, 720, 1, Border.R, Border.G, Border.B, 1);
-  Renderer.DrawQuad(40, 556, 0, 720, 1, Border.R, Border.G, Border.B, 1);
-  LabelAt(40, 18, 19, Language.Translate('STUDIO_BRAND'), StudioColor('StudioInk'));
-  LabelAt(636, 22, 13, 'VOCAL STUDIO', StudioColor('StudioMuted'));
+  StudioRoundRect(0, 0, 0, 800, 48, 0, StudioColor('StudioChrome'), 1);
+  Renderer.DrawQuad(0, 48, 0, 800, 1, Border.R, Border.G, Border.B, 0.6);
+  Renderer.DrawQuad(40, 562, 0, 720, 1, Border.R, Border.G, Border.B, 0.6);
+  LabelAt(40, 14, 18, Language.Translate('STUDIO_BRAND'), StudioColor('StudioInk'));
+  LabelAt(652, 18, 13, 'VOCAL STUDIO', StudioColor('StudioMuted'));
   LabelAt(40, 572, 16, Language.Translate('STUDIO_NAV'), StudioColor('StudioMuted'));
 end;
 

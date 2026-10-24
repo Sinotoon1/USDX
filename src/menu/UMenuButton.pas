@@ -70,6 +70,7 @@ type
       Texture:                   TTexture; // Button Screen position and size
 
       Flat:                      boolean;
+      Action:                    boolean;
       Colorized:                 boolean;
       DeSelectTexture:           TTexture; // texture for colorized hack
 
@@ -310,7 +311,7 @@ begin
     PressValue := MotionValue(PressMotion, SDL_GetTicks);
     Normal.R := DeselectColR * DeselectInt; Normal.G := DeselectColG * DeselectInt; Normal.B := DeselectColB * DeselectInt;
     Hover.R := SelectColR * SelectInt; Hover.G := SelectColG * SelectInt; Hover.B := SelectColB * SelectInt;
-    StudioButton(Texture, Normal, Hover, MotionValue(FocusMotion, SDL_GetTicks), PressValue, Selectable);
+    StudioButton(Texture, Normal, Hover, MotionValue(FocusMotion, SDL_GetTicks), PressValue, Selectable, Action);
     for T := 0 to High(Text) do
     begin
       Text[T].MoveY := PressValue;

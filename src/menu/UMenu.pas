@@ -1001,6 +1001,7 @@ begin
 
   Button[Result].Z := ThemeButton.Z;
   Button[Result].Flat := Theme.Studio.Enabled and ThemeButton.Flat;
+  Button[Result].Action := Theme.Studio.Enabled and ThemeButton.Action;
 
   //Button Visibility
   Button[Result].Visible := ThemeButton.Visible;

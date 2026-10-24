@@ -13,6 +13,32 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def update_studio_copy(source, values):
+    """Update only our keys in [Text], retaining unrelated translation sections."""
+    result, pending, in_text = [], dict(values), False
+    for line in source.splitlines(keepends=True):
+        heading = re.fullmatch(r"\[([^\]]+)\]\s*", line)
+        if heading:
+            if in_text:
+                result.extend(
+                    k + "=" + v.replace("\n", r"\n") + "\n" for k, v in pending.items()
+                )
+                pending.clear()
+            in_text = heading[1] == "Text"
+        key = line.partition("=")[0]
+        if in_text and key in values:
+            line = key + "=" + values[key].replace("\n", r"\n") + "\n"
+            pending.pop(key, None)
+        result.append(line)
+    if in_text and pending:
+        if result and not result[-1].endswith("\n"):
+            result.append("\n")
+        result.extend(
+            k + "=" + v.replace("\n", r"\n") + "\n" for k, v in pending.items()
+        )
+    return "".join(result)
+
+
 def generate():
     design = json.loads((ROOT / "tools/studio-design.json").read_text(encoding="utf-8"))
     base = configparser.RawConfigParser(strict=False)
@@ -66,8 +92,8 @@ def generate():
             Tex="Rectangle",
             Flat=1,
             Type="Transparent",
-            Color="StudioAccentHover" if primary else "StudioSoft",
-            DColor="StudioAccent" if primary else "StudioSurface",
+            Color="StudioAccentHover" if primary else "StudioHover",
+            DColor="StudioAction" if primary else "StudioSurface",
             SelectW=w,
             SelectH=h,
             Fade=0,
@@ -83,7 +109,7 @@ def generate():
             w // 2,
             (h - size) // 2,
             size,
-            "White" if primary else "StudioInk",
+            "StudioOnAction" if primary else "StudioInk",
             Text=caption,
         )
         put(name + "Text1", Align=1)
@@ -143,9 +169,9 @@ def generate():
             put(
                 page + "Background",
                 Type="Fade",
-                ColR=0.06,
-                ColG=0.10,
-                ColB=0.08,
+                ColR=0.04,
+                ColG=0.05,
+                ColB=0.07,
                 Alpha=0.5,
             )
         else:
@@ -187,7 +213,7 @@ def generate():
                     SelectW=props.get("w", 0),
                     SelectH=props.get("h", 0),
                     FadeTex="",
-                    Color="StudioSoft",
+                    Color="StudioHover",
                     DColor="StudioSurface",
                 )
         if "texsbg" in props or "sbgw" in props:
@@ -259,23 +285,29 @@ def generate():
         ):
             text(subtitle, 40, 118, 20, "StudioMuted", W=720, H=32)
 
-    # Home: two purposeful mode surfaces and direct secondary navigation.
+    # MiHome-inspired desktop density: equal mode cards and two tool columns.
     for i in range(1, 7):
         hide("MainStatic" + str(i))
-    text("MainText1", 40, 76, 42, Text="STUDIO_HOME")
-    text("MainText2", 40, 132, 22, "StudioMuted", Text="STUDIO_SUBTITLE")
-    text("MainText3", 40, 378, 18, "StudioMuted", Text="STUDIO_IMPORT", W=720, H=28)
-    hide("MainText4")
-    text("MainTextDescription", 40, 488, 16, "StudioAccent", W=520, H=24)
-    text("MainTextDescriptionLong", 40, 512, 20, "StudioMuted", W=520, H=36)
-    for name, rect, title, body, action, primary in (
+    text("MainText1", 40, 76, design["type"]["hero"], Text="STUDIO_HOME")
+    text(
+        "MainText2",
+        40,
+        124,
+        design["type"]["body"],
+        "StudioMuted",
+        Text="STUDIO_SUBTITLE",
+    )
+    text("MainText3", 40, 532, 16, "StudioMuted", Text="STUDIO_IMPORT", W=720, H=22)
+    text("MainText4", 40, 340, 22, Text="STUDIO_TOOLS")
+    hide("MainTextDescription")
+    hide("MainTextDescriptionLong")
+    for name, rect, title, body, action in (
         (
             "MainButtonMulti",
             design["layout"]["homePractice"],
             "COACH_PRACTICE",
             "STUDIO_PRACTICE_BODY",
             "STUDIO_PRACTICE_ACTION",
-            True,
         ),
         (
             "MainButtonSolo",
@@ -283,28 +315,41 @@ def generate():
             "COACH_PLAY",
             "STUDIO_PLAY_BODY",
             "STUDIO_PLAY_ACTION",
-            False,
         ),
     ):
         button(name, rect, title)
-        put(name, Texts=3)
-        if primary:
-            put(name, Color="StudioSoft", DColor="StudioSoft")
-        ink = "StudioInk"
-        text(name + "Text1", 24, 22, 32, ink, Text=title)
-        text(name + "Text2", 24, 76, 21, ink, Text=body, W=rect[2] - 48, H=64)
-        text(name + "Text3", 24, 144, 18, ink, Text=action)
-    for i, (name, caption) in enumerate(
+        put(name, Texts=3, Action=1)
+        text(name + "Text1", 20, 18, design["type"]["mode"], Text=title)
+        text(
+            name + "Text2",
+            20,
+            60,
+            design["type"]["body"],
+            "StudioMuted",
+            Text=body,
+            W=rect[2] - 40,
+            H=56,
+        )
+        text(name + "Text3", 20, 124, 16, "StudioAccent", Text=action)
+    for i, (name, caption, hint) in enumerate(
         (
-            ("Jukebox", "SING_JUKEBOX"),
-            ("Stats", "SING_STATS"),
-            ("Editor", "SING_EDITOR"),
-            ("Options", "SING_OPTIONS"),
+            ("Jukebox", "SING_JUKEBOX", "STUDIO_TOOL_JUKEBOX"),
+            ("Stats", "SING_STATS", "STUDIO_TOOL_STATS"),
+            ("Editor", "SING_EDITOR", "STUDIO_TOOL_EDITOR"),
+            ("Options", "SING_OPTIONS", "STUDIO_TOOL_OPTIONS"),
         )
     ):
-        button("MainButton" + name, [40 + i * 184, 416, 168, 48], caption)
-    button("MainButtonAbout", [592, 510, 80, 34], "SING_ABOUT", size=18)
-    button("MainButtonExit", [680, 510, 80, 34], "SING_EXIT", size=18)
+        columns = design["layout"]["secondaryColumns"]
+        w, h = design["layout"]["secondarySize"]
+        gap = design["layout"]["secondaryGap"]
+        y = design["layout"]["secondaryY"] + (i // columns) * (h + gap)
+        name = "MainButton" + name
+        button(name, [40 + (i % columns) * (w + gap), y, w, h], caption)
+        put(name, Texts=2)
+        text(name + "Text1", 20, 8, 22, Text=caption)
+        text(name + "Text2", 20, 36, 16, "StudioMuted", Text=hint, W=w - 40, H=24)
+    button("MainButtonAbout", [592, 76, 80, 36], "SING_ABOUT", size=18)
+    button("MainButtonExit", [680, 76, 80, 36], "SING_EXIT", size=18)
     put(
         "MainButtonCollection1",
         Visible=0,
@@ -317,7 +362,7 @@ def generate():
         FadeTex="",
     )
 
-    text("NameText1", 40, 72, 36, Text="STUDIO_PROFILE")
+    text("NameText1", 40, 72, design["type"]["title"], Text="STUDIO_PROFILE")
     text("NameText2", 40, 118, 20, "StudioMuted", Text="STUDIO_PROFILE_HINT")
     put("NameSelectPlayerCount", X=40, Y=152, W=224, H=44, SkipX=8, SBGW=464)
     put("NamePlayerScrollAvatar", Count=1, Distance=0)
@@ -404,7 +449,7 @@ def generate():
     )
 
     # Settings: larger consistent targets with room for long Chinese values.
-    text("OptionsText1", 40, 72, 36, Text="STUDIO_SETTINGS")
+    text("OptionsText1", 40, 72, design["type"]["title"], Text="STUDIO_SETTINGS")
     for i, name in enumerate(
         (
             "Game",
@@ -427,7 +472,7 @@ def generate():
         )
     button("OptionsButtonExit", [592, 492, 168, 44], "SING_OPTIONS_EXIT", size=22)
     text("OptionsTextDescription", 40, 444, 20, "StudioMuted", W=528, H=56)
-    text("OptionsSubText1", 40, 72, 36)
+    text("OptionsSubText1", 40, 72, design["type"]["title"])
     text("OptionsSubTextDescription", 40, 118, 20, "StudioMuted", W=704, H=32)
     hide("OptionsSubTextWhereAmI")
     x, y, w, h = design["layout"]["settingsArea"]
@@ -470,7 +515,7 @@ def generate():
         for section in base.sections():
             if section.startswith((page + "TextNonParty", page + "StaticNonParty")):
                 hide(section)
-        text(page + "Text1", 40, 72, 36, Text="STUDIO_LIBRARY")
+        text(page + "Text1", 40, 72, design["type"]["title"], Text="STUDIO_LIBRARY")
         text(page + "Text2", 40, 120, 18, "StudioMuted", Text="STUDIO_LIBRARY_HINT")
         text(page + "TextCat", 40, 520, 18, "StudioMuted", Text="", W=456, H=28)
         for suffix in ("Equalizer",):
@@ -586,7 +631,7 @@ def generate():
 
     # Overview and utility pages keep the same header/content rhythm.
     for page, title in (("StatMain", "STAT_MAIN"), ("AboutMain", "ABOUT_MAIN")):
-        text(page + "Text1", 40, 72, 36, Text=title)
+        text(page + "Text1", 40, 72, design["type"]["title"], Text=title)
         text(page + "Text3", 40, 118, 20, "StudioMuted")
         hide(page + "Static6")
         hide(page + "Static8")
@@ -648,7 +693,7 @@ def generate():
                     Reflection=0,
                 )
 
-    text("ScoreText1", 40, 72, 36, Text="STUDIO_RESULT")
+    text("ScoreText1", 40, 72, design["type"]["title"], Text="STUDIO_RESULT")
     text("ScoreTextArtistTitle", 40, 118, 22, "StudioMuted", W=720, H=36)
     # Modal geometry and typography do not share the main-page header/footer.
     for page in ("CheckPopup", "ErrorPopup"):
@@ -751,10 +796,17 @@ def generate():
     skin = skin.replace("Theme=Deluxe", "Theme=Studio", 1).replace(
         "Name=Blue", "Name=Studio", 1
     )
-    return {
+    outputs = {
         "game/themes/Studio.ini": "".join(out),
         "game/themes/Deluxe/Studio.ini": skin,
-    }, design
+    }
+    for index, language in enumerate(("Chinese", "English")):
+        relative = f"game/languages/{language}.ini"
+        source = (ROOT / relative).read_text(encoding="utf-8-sig")
+        outputs[relative] = update_studio_copy(
+            source, {key: values[index] for key, values in design["copy"].items()}
+        )
+    return outputs, design
 
 
 def main():
