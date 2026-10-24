@@ -631,8 +631,13 @@ begin
     begin
       RetargetMotion(FocusMotion, Ord(SelectBool), SDL_GetTicks, StudioDuration(Theme.Studio.HoverMs));
       StudioSelector(Texture, TextureSBG, MotionValue(FocusMotion, SDL_GetTicks), showArrows);
+      Text.Z := Texture.Z;
       Text.Draw;
-      for SO := Low(TextOpt) to High(TextOpt) do TextOpt[SO].Draw;
+      for SO := Low(TextOpt) to High(TextOpt) do
+      begin
+        TextOpt[SO].Z := Texture.Z;
+        TextOpt[SO].Draw;
+      end;
       Exit;
     end;
     if SelectBool or not Colorized then

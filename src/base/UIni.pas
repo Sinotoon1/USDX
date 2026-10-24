@@ -76,7 +76,7 @@ const
   CHANNEL_OFF = 0;         // for field ChannelToPlayerMap
   LATENCY_AUTODETECT = -1; // for field Latency
   DEFAULT_RESOLUTION = '800x600';
-  DEFAULT_THEME = 'Deluxe';
+  DEFAULT_THEME = 'Studio';
   DEFAULT_HIGH_SCORE_SCREEN_ENTRIES = 5;
   MIN_HIGH_SCORE_SCREEN_ENTRIES = 5;
   MAX_HIGH_SCORE_SCREEN_ENTRIES = 20;
@@ -1572,7 +1572,7 @@ begin
   if Language < 0 then Language := 0; // Default to first available
 
   // SongMenu
-  SongMenu := ReadArrayIndex(ISongMenuMode, IniFile, 'Game', 'SongMenu', Ord(smRoulette));
+  SongMenu := ReadArrayIndex(ISongMenuMode, IniFile, 'Game', 'SongMenu', Ord(smList));
 
   // Tabs
   Tabs := ReadArrayIndex(ITabs, IniFile, 'Game', 'Tabs', 0);

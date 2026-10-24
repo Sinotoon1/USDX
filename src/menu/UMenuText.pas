@@ -94,6 +94,7 @@ type
 implementation
 
 uses
+  UThemes,
   UGraphic,
   UDisplay,
   UUnicodeStringHelper,
@@ -170,6 +171,32 @@ var
     end;
   end;
 
+  procedure BreakLongWord;
+  var
+    Bound, NextBound: cardinal;
+    ExplicitBreak: boolean;
+  begin
+    // CJK and long unspaced tokens must wrap without splitting UTF-8 bytes.
+    if (Theme = nil) or not Theme.Studio.Enabled then Exit;
+    Bound := LastBreak;
+    while Bound < NextPos do
+    begin
+      NextBound := Bound + 1;
+      while (NextBound <= cardinal(Length(Value))) and
+            ((Ord(Value[NextBound]) and $C0) = $80) do Inc(NextBound);
+      if (Bound > LastBreak) and
+         (TextWidth(Copy(Value, LastBreak, NextBound - LastBreak)) > W) then
+      begin
+        ExplicitBreak := isBreak;
+        isBreak := false;
+        AddBreak(LastBreak, Bound);
+        LastBreak := Bound; // AddBreak normally consumes a space; this is a glyph.
+        isBreak := ExplicitBreak;
+      end;
+      Bound := NextBound;
+    end;
+  end;
+
 begin
   isBreak := false;
   // set TextString
@@ -221,12 +248,8 @@ begin
           begin
             // add break before actual position, because there the text fits the area
             AddBreak(LastBreak, LastPos);
-          end
-          else // first word after break break within the word
-          begin
-            // to do
-            // AddBreak(LastBreak, LastBreak + 155);
           end;
+          BreakLongWord;
         end;
 
         isBreak := true;
@@ -241,12 +264,8 @@ begin
         begin
           // add break before actual position, because there the text fits the area
           AddBreak(LastBreak, LastPos);
-        end
-        else // first word after break -> break within the word
-        begin
-          // to do
-          // AddBreak(LastBreak, LastBreak + 155);
         end;
+        BreakLongWord;
       end;
     //end;
     Inc(FirstWord)

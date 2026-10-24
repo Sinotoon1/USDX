@@ -110,6 +110,7 @@ uses
   UMusic,
   URecord,
   URenderer,
+  UStudioUI,
   UScreenSingController,
   UScreenJukebox,
   USong,
@@ -546,6 +547,37 @@ begin
   end;
 end;
 
+// Studio changes only paint; note timing, pitch geometry and hit state stay native.
+procedure StudioNoteBar(Left, Top, Right, Bottom, Z: real; PlayerIndex: integer;
+  Golden, Rap, Filled: boolean);
+var
+  Ink, Paper, Fill: TRGB;
+  InkScale, Radius: single;
+begin
+  if Party.bPartyGame then Ink := GetPlayerColor(Ini.TeamColor[PlayerIndex])
+  else Ink := GetPlayerColor(Ini.PlayerColor[PlayerIndex]);
+  if Golden then Ink := StudioColor('StudioGolden');
+  InkScale := Max(Ink.R, Max(Ink.G, Ink.B));
+  if InkScale > 0.45 then
+  begin
+    Ink.R := Ink.R * 0.45 / InkScale;
+    Ink.G := Ink.G * 0.45 / InkScale;
+    Ink.B := Ink.B * 0.45 / InkScale;
+  end;
+  Radius := Theme.Studio.Radius;
+  if Rap then Radius := 1;
+  StudioRoundRect(Left, Top, Z, Right - Left, Bottom - Top, Radius, Ink, 1);
+  if not Filled then
+  begin
+    Paper := StudioColor('StudioStage');
+    Fill.R := Paper.R * 0.88 + Ink.R * 0.12;
+    Fill.G := Paper.G * 0.88 + Ink.G * 0.12;
+    Fill.B := Paper.B * 0.88 + Ink.B * 0.12;
+    StudioRoundRect(Left + 1.5, Top + 1.5, Z, Right - Left - 3,
+      Bottom - Top - 3, Radius - 1.5, Fill, 1);
+  end;
+end;
+
 // draw blank Notebars
 procedure SingDrawLine(Left, Top, Right: real; Track, PlayerIndex: integer; LineSpacing: integer);
 var
@@ -635,7 +667,7 @@ begin
               ColB := ColorB;
               Alpha := A;
             end;
-            Renderer.DrawTexture(Texture);
+            if not Theme.Studio.Enabled then Renderer.DrawTexture(Texture);
 
             //We keep the postion of the top left corner b4 it's overwritten
             GoldenStarPos := Rec.Left;
@@ -669,7 +701,7 @@ begin
               TexY1 := 0;
               TexY2 := 1;
             end;
-            Renderer.DrawTexture(Texture);
+            if not Theme.Studio.Enabled then Renderer.DrawTexture(Texture);
 
             // right part
             Rec.Left  := Rec.Right;
@@ -691,7 +723,12 @@ begin
               ColB := ColorB;
               Alpha := A;
             end;
-            Renderer.DrawTexture(Texture);
+            if not Theme.Studio.Enabled then Renderer.DrawTexture(Texture);
+
+            if Theme.Studio.Enabled then
+              StudioNoteBar(GoldenStarPos, Rec.Top, Rec.Right, Rec.Bottom, Texture.Z,
+                PlayerIndex, NoteType in [ntGolden, ntRapGolden],
+                NoteType in [ntRap, ntRapGolden], false);
 
             // Golden Star Patch
             if ((NoteType = ntGolden) or (NoteType = ntRapGolden)) and (Ini.EffectSing=1) then
@@ -714,6 +751,7 @@ var
   Texture: TTexture;
 //  R, G, B, A: real;
   NotesH2:    real;
+  StudioLeft: real;
 begin
   if (ScreenSing.Settings.InputVisible) then
   begin
@@ -744,6 +782,7 @@ begin
 
           Rec.Top    := Top - (Tone-CurrentSong.Tracks[Track].Lines[CurrentSong.Tracks[Track].CurrentLine].BaseNote)*LineSpacing/2 - NotesH2;
           Rec.Bottom := Rec.Top + 2 * NotesH2;
+          StudioLeft := Rec.Left;
 
           // draw the left part
           If (NoteType = ntRap) or (NoteType = ntRapGolden) then
@@ -761,7 +800,7 @@ begin
             ColB := 1;
             Alpha := 1;
           end;
-          Renderer.DrawTexture(Texture);
+          if not Theme.Studio.Enabled then Renderer.DrawTexture(Texture);
 
           // Middle part of the note
           Rec.Left  := Rec.Right;
@@ -796,7 +835,7 @@ begin
             TexX2 := round((Rec.Right-Rec.Left)/32);
             TexY2 := 1;
           end;
-          Renderer.DrawTexture(Texture);
+          if not Theme.Studio.Enabled then Renderer.DrawTexture(Texture);
 
           // the right part of the note
           Rec.Left  := Rec.Right;
@@ -817,7 +856,12 @@ begin
             ColB := 1;
             Alpha := 1;
           end;
-          Renderer.DrawTexture(Texture);
+          if not Theme.Studio.Enabled then Renderer.DrawTexture(Texture);
+
+          if Theme.Studio.Enabled then
+            StudioNoteBar(StudioLeft, Rec.Top, Rec.Right, Rec.Bottom, Texture.Z,
+              PlayerIndex, NoteType in [ntGolden, ntRapGolden],
+              NoteType in [ntRap, ntRapGolden], true);
 
           // Perfect note is stored
           if Perfect and (Ini.EffectSing=1) then
@@ -854,6 +898,8 @@ var
   A:          single;
   Texture:        TTexture;
 begin
+  // Flat Studio reference bars replace the glossy texture halo.
+  if Theme.Studio.Enabled then Exit;
   if (ScreenSing.settings.NotesVisible[PlayerIndex]) then
   begin
     A := sqrt((1 + sin(AudioPlayback.Position * 3)))/2 + 0.05;

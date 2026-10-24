@@ -34,6 +34,7 @@ interface
 {$I switches.inc}
 
 uses
+  UIMotion,
   UCatCovers,
   UCommon,
   UDataBase,
@@ -71,6 +72,8 @@ type
       fCurrentVideo: IVideo;
       MainChessboardMinLine: integer;
       MainListMinLine: integer;
+      StudioLastClickSong: integer;
+      StudioLastClickTick: cardinal;
 
       LastVisibleSongIndex: integer;
       FirstVisibleSongIndex: integer;
@@ -85,6 +88,7 @@ type
       NextRandomSongIdx: cardinal;
       RandomSearchOrder: CardinalArray;
 
+      function ParseStudioList(MouseButton: integer; BtnDown: boolean; X, Y: integer): boolean;
       procedure StartMusicPreview();
       procedure StartVideoPreview();
       function GetSongButtonMouseOverArea(ButtonIndex: integer): TMouseOverRect;
@@ -260,6 +264,7 @@ type
       procedure GenerateThumbnails();
       procedure SyncCoversToSongs();
       procedure OnShow; override;
+      procedure CancelPointerInput; override;
       procedure OnShowFinish; override;
       procedure OnHide; override;
       procedure SelectNext(onlyFix: boolean = true);
@@ -1447,6 +1452,12 @@ end;
 function TScreenSong.ParseMouse(MouseButton: integer; BtnDown: boolean; X, Y: integer): boolean;
 begin
 
+  if Theme.Studio.Enabled then
+  begin
+    if ScreenSongMenu.Visible then Exit(ScreenSongMenu.ParseMouse(MouseButton, BtnDown, X, Y));
+    if ScreenSongJumpTo.Visible then Exit(ScreenSongJumpTo.ParseMouse(MouseButton, BtnDown, X, Y));
+  end;
+
   // transfer mousecords to the 800x600 raster we use to draw
   X := Round((X / (ScreenW / Screens)) * RenderW);
   if (X > RenderW) then
@@ -1481,6 +1492,7 @@ var
   B: integer;
 begin
   Result := true;
+  if Theme.Studio.Enabled then Exit(ParseStudioList(MouseButton, BtnDown, X, Y));
   if (BtnDown) then begin
     if RightMbESC and (MouseButton = SDL_BUTTON_RIGHT) then begin
       //if RightMbESC is set, send ESC keypress
@@ -1512,6 +1524,66 @@ begin
       end;
     end;
   end;
+end;
+
+procedure TScreenSong.CancelPointerInput;
+var
+  I: integer;
+begin
+  inherited CancelPointerInput;
+  StudioLastClickSong := -1;
+  for I := 0 to High(StaticsList) do
+    StaticsList[I].Hovered := false;
+end;
+
+function TScreenSong.ParseStudioList(MouseButton: integer; BtnDown: boolean; X, Y: integer): boolean;
+var
+  B, Hit: integer;
+  NowTick: cardinal;
+begin
+  Result := true;
+  Hit := -1;
+  for B := 0 to High(Button) do
+    if Button[B].Visible and InRegion(X, Y, GetSongButtonMouseOverArea(B)) then Hit := B;
+  for B := 0 to High(StaticsList) do
+    StaticsList[B].Hovered := StaticsList[B].Visible and InRegion(X, Y, StaticsList[B].GetMouseOverArea);
+  if BtnDown and RightMbESC and (MouseButton = SDL_BUTTON_RIGHT) then
+    Exit(ParseInput(SDLK_ESCAPE, 0, true));
+  if BtnDown and (MouseButton = SDL_BUTTON_WHEELDOWN) then
+    Exit(ParseInput(SDLK_DOWN, 0, true));
+  if BtnDown and (MouseButton = SDL_BUTTON_WHEELUP) then
+    Exit(ParseInput(SDLK_UP, 0, true));
+  if MouseButton <> SDL_BUTTON_LEFT then Exit;
+  if BtnDown then
+  begin
+    PointerDown(StudioPointer, Hit);
+    Exit;
+  end;
+  Hit := PointerUp(StudioPointer, Hit);
+  if Hit < 0 then
+  begin
+    // Blank space or a canceled drag also breaks a pending double-click.
+    StudioLastClickSong := -1;
+    Exit;
+  end;
+  NowTick := SDL_GetTicks;
+  if (Hit = StudioLastClickSong) and (Hit = Interaction) and
+     (ElapsedTicks(NowTick, StudioLastClickTick) <= 350) then
+  begin
+    StudioLastClickSong := -1;
+    Exit(ParseInput(SDLK_RETURN, 0, true));
+  end;
+  if Hit <> Interaction then
+  begin
+    isScrolling := false;
+    OnSongDeSelect;
+    Interaction := Hit;
+    SetScrollRefresh;
+    LastSelectMouse := NowTick;
+    LastSelectTime := NowTick;
+  end;
+  StudioLastClickSong := Hit;
+  StudioLastClickTick := NowTick;
 end;
 
 function TScreenSong.GetSongButtonMouseOverArea(ButtonIndex: integer): TMouseOverRect;
@@ -1911,6 +1983,7 @@ begin
       Theme.Song.ListCover.Typ,
       Theme.Song.ListCover.Reflection,
       Theme.Song.ListCover.ReflectionSpacing);
+    StaticsList[StaticList[I]].Flat := Theme.Studio.Enabled;
   end;
 
   SetLength(ListTextArtist, Num);
@@ -2801,6 +2874,7 @@ begin
     Statics[ListRapToFreestyleIcon[I]].Visible := false;
 
     //reset
+    StaticsList[I].Selected := false;
     StaticsList[I].Texture.Free;
     StaticsList[I].Texture := StaticsList[I].TextureDeSelect.Clone();
     StaticsList[I].Texture.W := Theme.Song.ListCover.W;
@@ -2828,6 +2902,10 @@ begin
     B := B + 1;
   end;
 
+  if Theme.Studio.Enabled then
+    for I := 0 to High(StaticsList) do
+      StaticsList[I].Visible := I <= High(SongID);
+
   for I := 0 to High(SongID) do
   begin
     if (SongID[I] = Interaction) then
@@ -2835,9 +2913,13 @@ begin
       Alpha := 1;
       StaticsList[I].Texture.Free;
       StaticsList[I].Texture := StaticsList[I].TextureSelect.Clone();
+      StaticsList[I].Selected := true;
     end
     else
       Alpha := 0.7;
+
+    // Focus/selection has its own marker; do not lower readable text contrast.
+    if Theme.Studio.Enabled then Alpha := 1;
 
     // Set visibility of video icon
     Statics[ListVideoIcon[I]].Texture.Alpha := Alpha;

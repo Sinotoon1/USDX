@@ -34,6 +34,7 @@ interface
 {$I switches.inc}
 
 uses
+  UIMotion,
   URenderer,
   UMenuInteract;
 
@@ -43,6 +44,8 @@ type
       Texture:           TTexture; // Button Screen position and size
       Visible:           boolean;
       Flat:              boolean;
+      Hovered, Selected: boolean;
+      HoverMotion: TUIMotion;
 
       // for list item
       TextureSelect:     TTexture;
@@ -60,18 +63,28 @@ type
 
 implementation
 uses
-  UDisplay, UCommon, UStudioUI, UThemes;
+  UDisplay, UCommon, UStudioUI, UThemes, sdl2;
 
 procedure TStatic.Draw;
 var
-  Fill: TRGB;
+  Fill, Hover: TRGB;
+  Progress: single;
 begin
   if Visible then
   begin
     if Flat then
     begin
       Fill.R := Texture.ColR * Texture.Int; Fill.G := Texture.ColG * Texture.Int; Fill.B := Texture.ColB * Texture.Int;
+      RetargetMotion(HoverMotion, Ord(Hovered), SDL_GetTicks, StudioDuration(Theme.Studio.HoverMs));
+      Progress := MotionValue(HoverMotion, SDL_GetTicks);
+      Hover := StudioColor('StudioSoft');
+      Fill.R := Fill.R + (Hover.R - Fill.R) * Progress;
+      Fill.G := Fill.G + (Hover.G - Fill.G) * Progress;
+      Fill.B := Fill.B + (Hover.B - Fill.B) * Progress;
       StudioRoundRect(Texture.X, Texture.Y, Texture.Z, Texture.W, Texture.H, Theme.Studio.Radius, Fill, Texture.Alpha);
+      if Selected then
+        StudioRoundRect(Texture.X + 2, Texture.Y + 10, Texture.Z, 3, Texture.H - 20, 1,
+          StudioColor('StudioAccent'), Texture.Alpha);
       Exit;
     end;
     Texture.Reflection := Reflection;

@@ -315,6 +315,7 @@ type
   end;
 
   TThemeName = class(TThemeBasic)
+    ButtonContinue:            TThemeButton;
     PlayerButtonName:          TThemeButton;
     PlayerButtonAvatar:        TThemeButton;
 
@@ -1581,6 +1582,7 @@ begin
 
       // Name
       ThemeLoadBasic(Name, 'Name');
+      if Studio.Enabled then ThemeLoadButton(Name.ButtonContinue, 'NameButtonContinue');
 
       ThemeLoadButton(Name.PlayerButtonName, 'NamePlayerButtonName');
       ThemeLoadButton(Name.PlayerButtonAvatar, 'NamePlayerButtonAvatar');

@@ -759,6 +759,7 @@ end;
 
 procedure TDisplay.OnWindowResized();
 begin
+  CancelPointerInput;
   // update cursor position once the window has been resized, otherwise the cursor jumps
   Cursor_Update := true;
 

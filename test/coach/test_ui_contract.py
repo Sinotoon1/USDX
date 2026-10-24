@@ -86,7 +86,7 @@ class NativeUIContractTests(unittest.TestCase):
             "fresh install must use Chinese",
         )
         self.assertTrue(
-            "DEFAULT_THEME = 'Deluxe'" in source,
+            "DEFAULT_THEME = 'Studio'" in source,
             "fresh install must use the coach layout",
         )
         self.assertIn("GetArrayIndex(ILanguage, 'English')", source)
@@ -163,7 +163,9 @@ class NativeUIContractTests(unittest.TestCase):
 
     def test_bundled_gui_font_covers_core_chinese_labels(self):
         chinese = ini("game/languages/Chinese.ini")["Text"]
-        labels = "".join(v for k, v in chinese.items() if k.startswith("coach_"))
+        labels = "".join(
+            v for k, v in chinese.items() if k.startswith(("coach_", "studio_"))
+        )
         fonts = ini("game/fonts/fonts.ini")
         gui = fonts[fonts.sections()[0]]
         paths = [

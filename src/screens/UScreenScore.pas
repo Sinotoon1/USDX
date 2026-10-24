@@ -219,6 +219,7 @@ const
 implementation
 
 uses
+  UStudioUI,
   UAvatars,
   UGraphic,
   UHelp,
@@ -1681,12 +1682,23 @@ var
   BarStartPosX: real;
   ThemeIndex: integer;
   Texture: TTexture;
+  Ink: TRGB;
 begin
   ThemeIndex := PlayerPositionMap[PlayerNumber-1].Position;
 
   // this is solely for better readability of the drawing
   Width        := Theme.Score.StaticBackLevel[ThemeIndex].W;
   BarStartPosX := Theme.Score.StaticBackLevel[ThemeIndex].X;
+
+  if Theme.Studio.Enabled then
+  begin
+    Ink := StudioColor('StudioAccent');
+    if BarType = sbtLine then Ink := StudioColor('StudioFlat');
+    if BarType = sbtGolden then Ink := StudioColor('StudioGolden');
+    StudioRoundRect(BarStartPosX, BarStartPosY - NewHeight, ZBars, Width,
+      NewHeight, Theme.Studio.Radius, Ink, 1);
+    Exit;
+  end;
 
   // set the texture for the bar
   if (BarType = sbtScore) then

@@ -35,6 +35,7 @@ interface
 
 uses
   UAvatars,
+  UStudioUI,
   UDisplay,
   UFiles,
   UIni,
@@ -603,6 +604,7 @@ begin
       Num[I] := NoRepeatColors(1, I, 1);
 
     DesCol := GetPlayerColor(Num[I]);
+    if Theme.Studio.Enabled then DesCol := StudioColor('StudioSurface');
 
     Statics[PlayerCurrent[I]].Texture.ColR := DesCol.R;
     Statics[PlayerCurrent[I]].Texture.ColG := DesCol.G;
@@ -723,6 +725,16 @@ end;
 procedure TScreenName.PlayerColorButton(K: integer);
 var
   Col, DesCol: TRGB;
+
+  procedure StudioSurface(Index: integer);
+  begin
+    Button[Index].SelectColR := Col.R;
+    Button[Index].SelectColG := Col.G;
+    Button[Index].SelectColB := Col.B;
+    Button[Index].DeselectColR := DesCol.R;
+    Button[Index].DeselectColG := DesCol.G;
+    Button[Index].DeselectColB := DesCol.B;
+  end;
 begin
 
   Col := GetPlayerLightColor(K);
@@ -783,6 +795,16 @@ begin
 
   Num[PlayerIndex] := K;
   Ini.PlayerColor[PlayerIndex] := K;
+  if Theme.Studio.Enabled then
+  begin
+    Col := StudioColor('StudioSoft');
+    DesCol := StudioColor('StudioSurface');
+    StudioSurface(PlayerName);
+    StudioSurface(PlayerAvatar);
+    Statics[PlayerCurrent[PlayerIndex]].Texture.ColR := DesCol.R;
+    Statics[PlayerCurrent[PlayerIndex]].Texture.ColG := DesCol.G;
+    Statics[PlayerCurrent[PlayerIndex]].Texture.ColB := DesCol.B;
+  end;
 end;
 
 constructor TScreenName.Create;
@@ -819,6 +841,7 @@ begin
   Theme.Name.SelectPlayerLevel.oneItemOnly := true;
   Theme.Name.SelectPlayerLevel.showArrows := true;
   PlayerSelectLevel := AddSelectSlide(Theme.Name.SelectPlayerLevel, LevelIndex, IDifficultyTranslated);
+  if Theme.Studio.Enabled then AddButton(Theme.Name.ButtonContinue);
 
   isScrolling := false;
 
@@ -984,6 +1007,13 @@ begin
       begin
         Button[B].X := Theme.Name.PlayerAvatar.X;
         Button[B].Y := Theme.Name.PlayerAvatar.Y;
+        if Theme.Studio.Enabled then
+        begin
+          Button[B].W := Theme.Name.PlayerAvatar.W;
+          Button[B].H := Theme.Name.PlayerAvatar.H;
+          Button[B].Z := 0.95;
+          Button[B].Reflection := false;
+        end;
 
         AvatarCurrent := AvatarTarget;
         

@@ -149,6 +149,7 @@ type
 implementation
 
 uses
+  UStudioUI,
   SysUtils,
   USkins,
   UText,
@@ -469,6 +470,9 @@ end;
  *}
 procedure TLyricEngine.DrawLyricsLine(X, W, Y, H: real; Line: TLyricLine; Beat: real);
 var
+  Paint_act, Paint_en, Paint_dis: TRGBA;
+  Ink: TRGB;
+  InkScale: double;
   CurWord:        PLyricWord;     // current word
   LastWord:       PLyricWord;     // last word in line
   NextWord:       PLyricWord;     // word following current word
@@ -490,6 +494,10 @@ begin
   // do not draw empty lines
   if (Length(Line.Words) = 0) then
     Exit;
+
+  Paint_act := Self.LineColor_act;
+  Paint_en := Self.LineColor_en;
+  Paint_dis := Self.LineColor_dis;
 
   // set font size and style
   SetFontFamily(FontFamily);
@@ -542,6 +550,25 @@ begin
     OutlineColor_act := GetLyricOutlineColor(0);
     OutlineColor_en := GetLyricOutlineColor(0);
     OutlineColor_dis := GetLyricOutlineColor(0);
+  end;
+
+  if Theme.Studio.Enabled and (Display.CurrentScreen <> @ScreenJukebox) and
+     (Display.CurrentScreen <> @ScreenOptionsJukebox) then
+  begin
+    Ink := StudioColor('StudioInk');
+    Paint_en.R := Ink.R; Paint_en.G := Ink.G; Paint_en.B := Ink.B;
+    Ink := StudioColor('StudioMuted');
+    Paint_dis.R := Ink.R; Paint_dis.G := Ink.G; Paint_dis.B := Ink.B;
+    // Preserve each player's hue, but keep highlighted words readable on white.
+    InkScale := Max(Paint_act.R, Max(Paint_act.G, Paint_act.B));
+    if InkScale > 0.45 then
+    begin
+      Paint_act.R := Paint_act.R * 0.45 / InkScale;
+      Paint_act.G := Paint_act.G * 0.45 / InkScale;
+      Paint_act.B := Paint_act.B * 0.45 / InkScale;
+    end;
+    OutlineColor_act := StudioColor('StudioSurface');
+    OutlineColor_en := OutlineColor_act; OutlineColor_dis := OutlineColor_act;
   end;
 
   // center lyrics
@@ -625,14 +652,14 @@ begin
     // draw sentence before current word
     if (LyricsEffect in [lfxSimple, lfxBall, lfxShift]) then
       // only highlight current word and not that ones before in this line
-      SetFontColor(LineColor_en.R, LineColor_en.G ,LineColor_en.B, Alpha)
+      SetFontColor(Paint_en.R, Paint_en.G ,Paint_en.B, Alpha)
     else
-      SetFontColor(LineColor_act.R, LineColor_act.G ,LineColor_act.B, Alpha);
+      SetFontColor(Paint_act.R, Paint_act.G ,Paint_act.B, Alpha);
 
     DrawLyricsWords(Line, LyricX, LyricY, 0, Line.CurWord-1);
 
     // draw rest of sentence (without current word)
-    SetFontColor(LineColor_en.R, LineColor_en.G ,LineColor_en.B, Alpha);
+    SetFontColor(Paint_en.R, Paint_en.G ,Paint_en.B, Alpha);
 
     if (NextWord <> nil) then
     begin
@@ -658,7 +685,7 @@ begin
         WordY := LyricY;
 
       // change the color of the current word
-      SetFontColor(LineColor_act.R, LineColor_act.G ,LineColor_act.B, Alpha);
+      SetFontColor(Paint_act.R, Paint_act.G ,Paint_act.B, Alpha);
 
       DrawLyricsWords(Line, LyricX + CurWord.X, WordY, Line.CurWord, Line.CurWord);
     end
@@ -670,7 +697,7 @@ begin
       FontSize := GetFontSize();
       FontScale := 1.0 + ((1 - Progress) * 0.5);
       SetFontSize(FontSize * FontScale);
-      SetFontColor(LineColor_act.R, LineColor_act.G ,LineColor_act.B, Alpha);
+      SetFontColor(Paint_act.R, Paint_act.G ,Paint_act.B, Alpha);
       DrawLyricsWords(Line,
         LyricX + CurWord.X + ((1 - FontScale) * (CurWord.Width / 2)),
         LyricY + ((1 - FontScale) * (Line.Height / 2)),
@@ -690,14 +717,14 @@ begin
       Renderer.SetTextClipBoundary((LyricX + CurWord.X + (CurWord.Width * Progress)), cdRight);
 
       // and draw active left part
-      SetFontColor(LineColor_act.R, LineColor_act.G ,LineColor_act.B, Alpha);
+      SetFontColor(Paint_act.R, Paint_act.G ,Paint_act.B, Alpha);
       DrawLyricsWords(Line, LyricX + CurWord.X, LyricY, Line.CurWord, Line.CurWord);
 
       // clip active left part of the current word
       Renderer.SetTextClipBoundary((LyricX + CurWord.X + (CurWord.Width * Progress)), cdLeft);
 
       // and draw non-active right part
-      SetFontColor(LineColor_en.R, LineColor_en.G ,LineColor_en.B, Alpha);
+      SetFontColor(Paint_en.R, Paint_en.G ,Paint_en.B, Alpha);
       DrawLyricsWords(Line, LyricX + CurWord.X, LyricY, Line.CurWord, Line.CurWord);
 
       Renderer.ClipText := false;
@@ -722,14 +749,14 @@ begin
       // outline color
       SetOutlineColor(OutlineColor_en.R, OutlineColor_en.G, OutlineColor_en.B, Alpha);
 
-      SetFontColor(LineColor_en.R, LineColor_en.G ,LineColor_en.B, Alpha);
+      SetFontColor(Paint_en.R, Paint_en.G ,Paint_en.B, Alpha);
     end
     else
     begin
       // outline color
       SetOutlineColor(OutlineColor_dis.R, OutlineColor_dis.G, OutlineColor_dis.B, Alpha);
 
-      SetFontColor(LineColor_dis.R, LineColor_dis.G ,LineColor_dis.B, Alpha);
+      SetFontColor(Paint_dis.R, Paint_dis.G ,Paint_dis.B, Alpha);
     end;
 
     DrawLyricsWords(Line, LyricX, LyricY, 0, High(Line.Words));

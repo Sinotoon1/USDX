@@ -217,6 +217,7 @@ var
 implementation
 
 uses
+  UStudioUI,
   UCoachCore,
   Classes,
   Math,
@@ -679,6 +680,7 @@ end;
 
 function TScreenSingView.Draw: boolean;
 var
+  PausePaper: TRGB;
   DisplayTime:            real;
   DisplayPrefix:          string;
   DisplayMin:             integer;
@@ -981,7 +983,13 @@ begin
   begin
     if CoachMode <> cmPractice then
     begin
-      Renderer.DrawQuad(0, 0, 1, 800, 600, 0, 0, 0, 0.7);
+      if Theme.Studio.Enabled then
+      begin
+        PausePaper := StudioColor('StudioCanvas');
+        Renderer.DrawQuad(0, 0, 1, 800, 600, PausePaper.R, PausePaper.G, PausePaper.B, 0.96);
+      end
+      else
+        Renderer.DrawQuad(0, 0, 1, 800, 600, 0, 0, 0, 0.7);
       ScreenSing.Text[TextPause].Visible := true;
       ScreenSing.Text[TextPause].Draw;
       ScreenSing.Text[TextPause].Visible := false;

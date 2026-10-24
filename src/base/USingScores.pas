@@ -233,6 +233,7 @@ type
 implementation
 
 uses
+  UStudioUI,
   SysUtils,
   Math,
   sdl2,
@@ -1054,6 +1055,7 @@ var
   Position: TScorePosition;
   ScoreStr: String;
   Drawing: boolean;
+  Ink: TRGB;
   procedure updatePosition(themeElements: TThemeSingPlayer);
   begin
     Position.BGX := themeElements.ScoreBackground.X;
@@ -1166,7 +1168,11 @@ begin
       W := Position.BGW;
       H := Position.BGH;
     end;
-    Renderer.DrawTexture(Players[Index].ScoreBG);
+    if Theme.Studio.Enabled then
+      StudioRoundRect(Position.BGX, Position.BGY, Players[Index].ScoreBG.Z,
+        Position.BGW, Position.BGH, Theme.Studio.Radius, StudioColor('StudioSurface'), 1)
+    else
+      Renderer.DrawTexture(Players[Index].ScoreBG);
 
     // draw score text
     SetFontFamily(Position.TextFont);
@@ -1176,6 +1182,11 @@ begin
     SetFontPos(Position.TextX, Position.TextY);
     SetFontReflection(false, 0);
     SetFontColor(1, 1, 1, 1);
+    if Theme.Studio.Enabled then
+    begin
+      Ink := StudioColor('StudioInk');
+      SetFontColor(Ink.R, Ink.G, Ink.B, 1);
+    end;
 
     ScoreStr := InttoStr(Players[Index].ScoreDisplayed);
     while (Length(ScoreStr) < 5) do
@@ -1192,6 +1203,7 @@ var
   R, G, B:    real;
   Diff: real;
   Drawing: boolean;
+  Ink: TRGB;
   procedure updatePosition(themeElements: TThemeSingPlayer);
   begin
     Position.RBX := themeElements.SingBar.X;
@@ -1332,6 +1344,18 @@ begin
       R := 0;
       G := 1;
       B := 0;
+    end;
+
+    if Theme.Studio.Enabled then
+    begin
+      // Same native rating value, with flat, readable paint instead of a bitmap.
+      Ink := StudioColor('StudioAccent');
+      if Players[Index].RBPos < 0.42 then Ink := StudioColor('StudioSharp');
+      StudioRoundRect(Position.RBX, Position.RBY, 0, Position.RBW, Position.RBH,
+        2, StudioColor('StudioBorder'), 1);
+      StudioRoundRect(Position.RBX, Position.RBY, 0,
+        Position.RBW * Players[Index].RBPos, Position.RBH, 2, Ink, 1);
+      Exit;
     end;
 
     // draw rating bar bg

@@ -913,6 +913,12 @@ begin
     StaticsList[StatNum].TextureDeSelect.ColR := ColR;
     StaticsList[StatNum].TextureDeSelect.ColG := ColG;
     StaticsList[StatNum].TextureDeSelect.ColB := ColB;
+    if Theme.Studio.Enabled then
+    begin
+      StaticsList[StatNum].TextureDeSelect.ColR := DColR;
+      StaticsList[StatNum].TextureDeSelect.ColG := DColG;
+      StaticsList[StatNum].TextureDeSelect.ColB := DColB;
+    end;
   end;
 
   StaticsList[StatNum].Visible := true;
@@ -1027,7 +1033,12 @@ begin
       ThemeButton.Text[BT].Font, ThemeButton.Text[BT].Style, ThemeButton.Text[BT].Size,
       ThemeButton.Text[BT].Align, ThemeButton.Text[BT].Text);
     if Theme.Studio.Enabled then
+    begin
       Button[Result].Text[BT].Z := ThemeButton.Text[BT].Z;
+      Button[Result].Text[BT].W := ThemeButton.Text[BT].W;
+      Button[Result].Text[BT].H := ThemeButton.Text[BT].H;
+      Button[Result].Text[BT].Text := ThemeButton.Text[BT].Text;
+    end;
   end;
 
   // button collection mod
@@ -2187,6 +2198,17 @@ begin
   ThemeButtonBack.Y := Round(ScrollArea.Y + ScrollArea.H + Theme.OptionsSub.ButtonBackVSpacing);
   AddButton(ThemeButtonBack);
   AddButtonText(20, 3, Theme.Options.Description[OPTIONS_DESC_INDEX_BACK]);
+  if Theme.Studio.Enabled then
+  begin
+    with Button[High(Button)].Text[High(Button[High(Button)].Text)] do
+    begin
+      ColR := Theme.OptionsSub.SelectS.TColR;
+      ColG := Theme.OptionsSub.SelectS.TColG;
+      ColB := Theme.OptionsSub.SelectS.TColB;
+      Size := 22;
+      Y := ThemeButtonBack.Y + 10;
+    end;
+  end;
   Interaction := 0;
 
 end;

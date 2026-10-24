@@ -95,9 +95,12 @@ begin
     begin
       if (Interaction = 0) then
       begin
-        Button[0].Text[0].ColR := Theme.SongJumpto.ButtonSearchText.ColR;
-        Button[0].Text[0].ColG := Theme.SongJumpto.ButtonSearchText.ColG;
-        Button[0].Text[0].ColB := Theme.SongJumpto.ButtonSearchText.ColB;
+        if not Theme.Studio.Enabled then
+        begin
+          Button[0].Text[0].ColR := Theme.SongJumpto.ButtonSearchText.ColR;
+          Button[0].Text[0].ColG := Theme.SongJumpto.ButtonSearchText.ColG;
+          Button[0].Text[0].ColB := Theme.SongJumpto.ButtonSearchText.ColB;
+        end;
 
         Button[0].Text[0].Text := Button[0].Text[0].Text + UCS4ToUTF8String(CharCode);
         SetTextFound(CatSongs.SetFilter(Button[0].Text[0].Text, fSelectType));

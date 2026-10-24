@@ -1,0 +1,250 @@
+{
+  "spacing": 8,
+  "radius": 8,
+  "motion": {
+    "HoverMs": 160,
+    "PressMs": 90,
+    "PageMs": 220
+  },
+  "type": {
+    "hero": 42,
+    "title": 36,
+    "mode": 32,
+    "body": 22,
+    "label": 24,
+    "small": 18
+  },
+  "colors": {
+    "StudioCanvas": [
+      246,
+      248,
+      245
+    ],
+    "StudioSurface": [
+      255,
+      255,
+      255
+    ],
+    "StudioInk": [
+      28,
+      40,
+      34
+    ],
+    "StudioMuted": [
+      83,
+      99,
+      89
+    ],
+    "StudioAccent": [
+      30,
+      94,
+      73
+    ],
+    "StudioAccentHover": [
+      38,
+      112,
+      86
+    ],
+    "StudioSoft": [
+      224,
+      239,
+      229
+    ],
+    "StudioBorder": [
+      210,
+      222,
+      214
+    ],
+    "StudioStage": [
+      246,
+      248,
+      245
+    ],
+    "StudioStageSurface": [
+      255,
+      255,
+      255
+    ],
+    "StudioStageText": [
+      28,
+      40,
+      34
+    ],
+    "StudioStageMuted": [
+      83,
+      99,
+      89
+    ],
+    "StudioSharp": [
+      163,
+      75,
+      22
+    ],
+    "StudioFlat": [
+      38,
+      94,
+      171
+    ],
+    "StudioClose": [
+      25,
+      117,
+      77
+    ],
+    "StudioGolden": [
+      155,
+      104,
+      21
+    ]
+  },
+  "layout": {
+    "margin": 40,
+    "contentWidth": 720,
+    "homePractice": [
+      40,
+      176,
+      440,
+      184
+    ],
+    "homePlay": [
+      496,
+      176,
+      264,
+      184
+    ],
+    "secondaryY": 416,
+    "secondarySize": [
+      168,
+      48
+    ],
+    "settingsArea": [
+      40,
+      154,
+      704,
+      344
+    ],
+    "libraryRows": [
+      40,
+      150,
+      456,
+      64,
+      5,
+      8
+    ],
+    "libraryPreview": [
+      528,
+      150,
+      232,
+      232
+    ],
+    "practicePanel": [
+      16,
+      16,
+      768,
+      236
+    ],
+    "dialog": [
+      176,
+      154,
+      448,
+      272
+    ]
+  },
+  "copy": {
+    "STUDIO_BRAND": [
+      "声乐练习室",
+      "Vocal Studio"
+    ],
+    "STUDIO_NAV": [
+      "方向键 选择  ·  Enter 确认  ·  Esc 返回",
+      "Arrows Select  ·  Enter Confirm  ·  Esc Back"
+    ],
+    "STUDIO_HOME": [
+      "把每一句，唱得更准",
+      "Find your voice, one phrase at a time"
+    ],
+    "STUDIO_SUBTITLE": [
+      "从一句开始，听见自己的进步。",
+      "Start small. Hear your progress."
+    ],
+    "STUDIO_PRACTICE_BODY": [
+      "逐句循环 · 实时音准反馈\n练准一句，再完成整首歌",
+      "Phrase loops and live pitch feedback\nBuild confidence before the full song"
+    ],
+    "STUDIO_PLAY_BODY": [
+      "完整跟唱，挑战得分\n保留原版评分与结算",
+      "Sing a full song\nKeep the classic scoring"
+    ],
+    "STUDIO_PRACTICE_ACTION": [
+      "F6  开始练习",
+      "F6  Start practice"
+    ],
+    "STUDIO_PLAY_ACTION": [
+      "F5  开始游玩",
+      "F5  Start playing"
+    ],
+    "STUDIO_IMPORT": [
+      "导入歌曲：先在 Python 教唱程序提取人声、确认音高，再导出歌包。",
+      "Import: separate vocals and review pitch in the Python coach, then export a song pack."
+    ],
+    "STUDIO_LIBRARY": [
+      "选择一首歌",
+      "Choose a song"
+    ],
+    "STUDIO_LIBRARY_HINT": [
+      "单击选曲 · 双击或 Enter 开始 · J 搜索 · M 更多操作",
+      "Click to select · Double-click or Enter to start · J Search · M More"
+    ],
+    "STUDIO_SETTINGS": [
+      "设置你的工作室",
+      "Make it your studio"
+    ],
+    "STUDIO_PROFILE": [
+      "准备好你的声音",
+      "Get ready to sing"
+    ],
+    "STUDIO_PROFILE_HINT": [
+      "设置玩家与难度，确认后进入曲库。",
+      "Choose your player and difficulty, then open the library."
+    ],
+    "STUDIO_RESULT": [
+      "这一遍，完成了",
+      "That is a wrap"
+    ],
+    "STUDIO_READY": [
+      "随时开始下一遍",
+      "Ready for another take"
+    ],
+    "STUDIO_AVATAR": [
+      "头像",
+      "Avatar"
+    ],
+    "STUDIO_NAME": [
+      "玩家昵称",
+      "Player name"
+    ],
+    "STUDIO_AVATAR_HINT": [
+      "左右键切换头像",
+      "Left / Right to change"
+    ],
+    "STUDIO_COLOR": [
+      "玩家颜色",
+      "Player color"
+    ],
+    "STUDIO_LEVEL": [
+      "演唱难度",
+      "Difficulty"
+    ],
+    "STUDIO_SEARCH": [
+      "搜索歌曲",
+      "Search songs"
+    ],
+    "STUDIO_FILTER": [
+      "筛选",
+      "Filter"
+    ],
+    "STUDIO_PLAY_HINT": [
+      "跟随音符与歌词，完整唱完这一首。  ·  P 暂停  ·  Esc 返回",
+      "Follow the notes and lyrics.  ·  P Pause  ·  Esc Back"
+    ]
+  }
+}

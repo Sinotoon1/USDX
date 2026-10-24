@@ -1788,20 +1788,34 @@ var Practice: boolean; I, Count: integer;
     ReferenceText, DelayText: UTF8String;
 begin
   Practice := CoachMode = cmPractice;
-  Statics[fCoachPanel].Visible := Practice;
-  Text[fCoachTitle].Visible := Practice;
+  Statics[fCoachPanel].Visible := Practice or Theme.Studio.Enabled;
+  Text[fCoachTitle].Visible := Practice or Theme.Studio.Enabled;
   Text[fCoachText].Visible := Practice;
   Text[fCoachMetrics].Visible := Practice;
   Text[fCoachState].Visible := Practice;
-  Text[fCoachHelp].Visible := Practice;
+  Text[fCoachHelp].Visible := Practice or Theme.Studio.Enabled;
   Text[fCoachPlayText].Visible := not Practice;
   for I := Low(fCoachButtons) to High(fCoachButtons) do
     Button[fCoachButtons[I]].Visible := Practice;
+  if Theme.Studio.Enabled then
+  begin
+    Statics[fCoachPanel].Texture.H := Theme.CoachPanel.H;
+    Text[fCoachTitle].Y := Theme.CoachTitle.Y;
+    Text[fCoachHelp].Y := Theme.CoachHelp.Y;
+  end;
   if not Practice then
   begin
     Text[fCoachPlayText].Text := Language.Translate('COACH_PLAY');
     if not CurrentSong.CoachReferenceReviewed then
       Text[fCoachPlayText].Text := Language.Translate('COACH_PLAY_UNRANKED');
+    if Theme.Studio.Enabled then
+    begin
+      Statics[fCoachPanel].Texture.H := 192;
+      Text[fCoachTitle].Y := 96;
+      Text[fCoachTitle].Text := CurrentSong.Artist + ' - ' + CurrentSong.Title;
+      Text[fCoachHelp].Y := 160;
+      Text[fCoachHelp].Text := Language.Translate('STUDIO_PLAY_HINT');
+    end;
     Exit;
   end;
   Count := 0;
