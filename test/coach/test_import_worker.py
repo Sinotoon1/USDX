@@ -101,6 +101,42 @@ class ImportTests(unittest.TestCase):
                 self.job["review_status"] = "reviewed"
                 self.save()
 
+            def prepare_lyrics(self, job, directory, emit, cancelled):
+                emit(phase="lyrics")
+                path = directory / "recognized-lyrics.json"
+                path.write_text(
+                    json.dumps(
+                        dict(
+                            schema_version=1,
+                            status="ready",
+                            pipeline_version="faster-whisper-dtw-v1",
+                            reference_revision=job["job_id"],
+                            source_sha256=job["source_sha256"],
+                            vocals_sha256=job["artifacts"]["vocals.wav"],
+                            model_sha256="b" * 64,
+                            duration_seconds=job["duration_seconds"],
+                            words=[
+                                dict(
+                                    start_seconds=0.1,
+                                    end_seconds=0.6,
+                                    text="晨",
+                                    probability=0.9,
+                                    segment=0,
+                                ),
+                                dict(
+                                    start_seconds=0.6,
+                                    end_seconds=1.2,
+                                    text="光",
+                                    probability=0.95,
+                                    segment=0,
+                                ),
+                            ],
+                        )
+                    ),
+                    encoding="utf-8",
+                )
+                return path
+
             def save(self):
                 (self.directory / "job.json").write_text(
                     json.dumps(self.job), encoding="utf-8"
@@ -123,6 +159,17 @@ class ImportTests(unittest.TestCase):
         self.assertEqual("auto", self.engine.job["review_status"])
         self.assertFalse((self.root / "songs").exists())
         self.assertEqual(result, self.worker.read_state(self.state))
+        self.assertEqual(2, result["lyric_word_count"])
+        self.assertTrue(Path(result["lyrics_path"]).is_file())
+        self.assertEqual("晨光", result["lyrics_preview"])
+
+    def test_modified_lyrics_cannot_be_confirmed_or_silently_export_la(self):
+        ready = self.prepare()
+        Path(ready["lyrics_path"]).write_text("{}", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "lyrics_changed"):
+            self.publish()
+        self.assertEqual("auto", self.engine.job["review_status"])
+        self.assertFalse((self.root / "songs").exists())
 
     def test_explicit_current_revision_confirmation_required(self):
         self.prepare()

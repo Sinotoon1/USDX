@@ -21,7 +21,7 @@ model=Path(sys.argv[1])
 repo='Systran/faster-whisper-small'
 revision=HfApi().model_info(repo).sha
 snapshot_download(repo,revision=revision,local_dir=model,
-    allow_patterns=['model.bin','config.json','tokenizer.json','vocabulary.json'])
+    allow_patterns=['model.bin','config.json','tokenizer.json','vocabulary.*'])
 (model/'USDX-MODEL-ORIGIN.json').write_text(json.dumps(
     {'repo':repo,'revision':revision},indent=2),encoding='utf-8')
 print('LYRICS SETUP OK: local small model; revision='+revision)

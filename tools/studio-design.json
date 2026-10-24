@@ -254,8 +254,8 @@
       "F5  Start playing"
     ],
     "STUDIO_IMPORT": [
-      "F7 导入音乐 · 提取人声与参考音高，试听确认后一键加入曲库。",
-      "F7 Import music · Separate vocals, review pitch and add to the library."
+      "F7 导入音乐 · 识别歌词与参考音高，试听确认后一键加入曲库。",
+      "F7 Import music · Transcribe lyrics, review pitch and add to the library."
     ],
     "STUDIO_LIBRARY": [
       "我的曲库",
@@ -346,8 +346,8 @@
       "Import music"
     ],
     "IMPORT_HINT": [
-      "选择本地音频 → 提取人声与参考音高 → 试听确认 → 加入曲库",
-      "Choose audio → Separate and analyze → Listen and confirm → Add to library"
+      "选择音频 → 提取人声、识别歌词与音高 → 试听确认 → 加入曲库",
+      "Choose audio → Extract vocals, lyrics and pitch → Review → Add to library"
     ],
     "IMPORT_FILE": [
       "选择音乐文件 · 或 Ctrl+V 粘贴路径 / 拖入文件",
@@ -418,20 +418,20 @@
       "Identifying the lead-vocal reference pitch…"
     ],
     "IMPORT_RUNNING_HINT": [
-      "后台处理中，当前页面保持响应；可随时取消。首次使用可能需要下载模型。",
-      "Working in the background. You may cancel. First use may download a model."
+      "后台处理中，当前页面保持响应；可取消处理。",
+      "Working in the background. The page remains responsive; you may cancel."
     ],
     "IMPORT_READY": [
-      "参考已生成，等待试听确认",
-      "Reference ready — listen and review"
+      "歌词和曲谱已生成，等待试听确认",
+      "Lyrics and score ready — listen and review"
     ],
     "IMPORT_READY_HINT": [
-      "请试听主唱并核对下方曲线；确认旋律一致后点击「确认参考并入库」。",
-      "Listen and check the curve, then confirm that it matches the lead melody."
+      "请试听并核对识别歌词与参考曲线，再确认入库。",
+      "Listen, check the recognized lyrics and reference curve, then confirm."
     ],
     "IMPORT_SUMMARY": [
-      "时长 %.1f 秒 · %d 个候选音符 · 有声音高覆盖 %.0f%%",
-      "%.1f sec · %d candidate notes · %.0f%% voiced coverage"
+      "%.1f秒 · %d参考音符 · %d词 · %d低置信 · %d自由词",
+      "%.1fs · %d notes · %d words · %d low-confidence · %d unpitched"
     ],
     "IMPORT_PUBLISHING": [
       "正在生成歌包并加入曲库…",
@@ -442,8 +442,8 @@
       "Song added to your library"
     ],
     "IMPORT_DONE_HINT": [
-      "人声、伴奏与参考音高已保存；歌词暂用 la 音节，后续可编辑。",
-      "Vocals, backing and pitch saved. Lyrics use editable la syllables."
+      "真实识别歌词、词级时间、人声、伴奏与参考音高已保存，可在编辑器校对。",
+      "Recognized lyrics, word times, vocals, backing and pitch saved; review in the editor."
     ],
     "IMPORT_FAILED": [
       "处理未完成",
@@ -496,6 +496,38 @@
     "STUDIO_NO_SONGS": [
       "曲库为空。\n按 F7 导入音乐并生成歌曲。",
       "Your library is empty.\nPress F7 to import music and build a song."
+    ],
+    "IMPORT_LYRICS": [
+      "正在识别歌词与词级时间…",
+      "Transcribing lyrics and word timestamps…"
+    ],
+    "IMPORT_ALIGNING": [
+      "正在对齐歌词与参考音符…",
+      "Aligning lyrics with reference notes…"
+    ],
+    "IMPORT_LYRICS_PREVIEW": [
+      "歌词预览：%s",
+      "Lyrics preview: %s"
+    ],
+    "IMPORT_ERROR_LYRICS_MODEL_MISSING": [
+      "歌词模型尚未就绪，请运行随包的 tools/setup-coach-lyrics.ps1。",
+      "Run the bundled tools/setup-coach-lyrics.ps1 to install the local lyrics model."
+    ],
+    "IMPORT_ERROR_LYRICS_RUNTIME_MISSING": [
+      "歌词环境尚未就绪，请运行随包的 tools/setup-coach-lyrics.ps1。",
+      "Run the bundled tools/setup-coach-lyrics.ps1 to prepare its isolated runtime."
+    ],
+    "IMPORT_ERROR_LYRICS_RECOGNITION_FAILED": [
+      "歌词识别未完成，请查看引擎 data/lyrics 对应任务的 worker.log 后重试。",
+      "Lyrics recognition did not complete. Inspect the task worker.log under data/lyrics."
+    ],
+    "IMPORT_ERROR_LYRICS_CHANGED": [
+      "歌词数据已变化，请重新处理、试听并确认当前版本。",
+      "Lyrics changed. Process again, listen and confirm the current version."
+    ],
+    "IMPORT_ERROR_LYRICS_REQUIRED": [
+      "本次导入需要真实歌词，请重新处理并生成歌词。",
+      "This import requires recognized lyrics. Process the song again."
     ]
   },
   "reference": {

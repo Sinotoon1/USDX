@@ -90,6 +90,8 @@ begin
   Artist := 'Unknown'; LocalError := ''; Auditioned := false; Loaded := false;
   Cancelling := false; LastJob := ''; Importer.Phase := ipIdle;
   Importer.ErrorCode := ''; Importer.VocalsFile := ''; Importer.SongFile := '';
+  Importer.LyricsPreview := ''; Importer.LyricWordCount := 0;
+  Importer.LowConfidenceWordCount := 0; Importer.FreestyleWordCount := 0;
   SetLength(Importer.Preview, 0); Importer.Duration := 0; Importer.JobID := '';
   UpdateView;
 end;
@@ -206,8 +208,13 @@ begin
   if Error <> '' then Text[DetailText].Text := ErrorText(Error);
   Text[SummaryText].Text := '';
   if Importer.Phase in [ipReady, ipPublished] then
+  begin
     Text[SummaryText].Text := Format(Language.Translate('IMPORT_SUMMARY'),
-      [Importer.Duration, Importer.NoteCount, Importer.Coverage * 100]);
+      [Importer.Duration, Importer.NoteCount, Importer.LyricWordCount,
+       Importer.LowConfidenceWordCount, Importer.FreestyleWordCount]);
+    if Error = '' then Text[DetailText].Text :=
+      Format(Language.Translate('IMPORT_LYRICS_PREVIEW'), [Importer.LyricsPreview]);
+  end;
   if AudioFile = '' then Button[0].Text[0].Text := Language.Translate('IMPORT_FILE')
   else Button[0].Text[0].Text := Path(AudioFile).GetName.ToUTF8;
   Button[1].Text[0].Text := SongTitle; Button[2].Text[0].Text := Artist;

@@ -17,9 +17,11 @@ type
   public
     Phase: TImportPhase;
     DetailPhase, ErrorCode, JobID, VocalsFile, SongFile: UTF8String;
+    LyricsPreview: UTF8String;
     EngineRoot, PythonFile, OutputRoot: IPath;
     Duration, Coverage: double;
     NoteCount: integer;
+    LyricWordCount, LowConfidenceWordCount, FreestyleWordCount: integer;
     Preview: array of TImportNote;
     constructor Create;
     destructor Destroy; override;
@@ -174,6 +176,7 @@ begin
   StateFile := Directory.Append('import-' + Copy(GUIDToString(ID), 2, 36) + '.json');
   Phase := ipRunning; DetailPhase := 'starting'; ErrorCode := ''; JobID := ''; SongFile := '';
   VocalsFile := ''; Duration := 0; NoteCount := 0; SetLength(Preview, 0);
+  LyricsPreview := ''; LyricWordCount := 0; LowConfidenceWordCount := 0; FreestyleWordCount := 0;
   Launch('prepare', ['--audio', Path(Audio).GetAbsolutePath.ToUTF8]);
 end;
 
@@ -250,6 +253,14 @@ begin
       if IsNan(Duration) or IsInfinite(Duration) or (Duration <= 0) or (Duration > 600) or
         IsNan(Coverage) or IsInfinite(Coverage) then raise Exception.Create('invalid_preview');
       NoteCount := Obj.Get('note_count', 0); Notes := Obj.Find('preview');
+      LyricsPreview := Obj.Get('lyrics_preview', '');
+      LyricWordCount := Obj.Get('lyric_word_count', 0);
+      LowConfidenceWordCount := Obj.Get('low_confidence_word_count', 0);
+      FreestyleWordCount := Obj.Get('freestyle_word_count', 0);
+      if (LyricWordCount <= 0) or (LyricWordCount > 20000) or
+        (Length(LyricsPreview) > 800) or (LowConfidenceWordCount < 0) or
+        (LowConfidenceWordCount > LyricWordCount) or (FreestyleWordCount < 0) or
+        (FreestyleWordCount > LyricWordCount) then raise Exception.Create('invalid_lyrics');
       SetLength(Preview, 0);
       if (Notes is TJSONArray) and (Notes.Count <= 512) then
       begin

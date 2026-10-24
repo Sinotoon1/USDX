@@ -8,6 +8,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -18,7 +19,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from uuid import uuid4
 
-from coach_bridge import digest, export_reference, header
+from coach_bridge import digest, export_reference, export_target, header
+from coach_lyrics import align_words, build_lyrics, read_lyrics, render_lrc
 
 AUDIO_SUFFIXES = {".wav", ".mp3", ".m4a", ".flac", ".ogg", ".aac"}
 MAX_STATE_BYTES = 262144
@@ -57,7 +59,7 @@ def read_state(path):
     return value
 
 
-def run_child(command, log_path, cancelled, emit, timeout=3600):
+def run_child(command, log_path, cancelled, emit, timeout=3600, *, phase=None):
     """Own, terminate and reap exactly the child created by this worker."""
     with Path(log_path).open("w", encoding="utf-8") as log:
         process = subprocess.Popen(
@@ -75,7 +77,7 @@ def run_child(command, log_path, cancelled, emit, timeout=3600):
                 if time.monotonic() - started > timeout:
                     raise TimeoutError("model_timeout")
                 directory = Path(log_path).parent
-                phase = (
+                current_phase = phase or (
                     "pitch"
                     if all(
                         (directory / n).is_file()
@@ -83,9 +85,9 @@ def run_child(command, log_path, cancelled, emit, timeout=3600):
                     )
                     else "separating"
                 )
-                if phase != previous_phase:
-                    emit(phase=phase)
-                    previous_phase = phase
+                if current_phase != previous_phase:
+                    emit(phase=current_phase)
+                    previous_phase = current_phase
                 time.sleep(0.2)
         except BaseException:
             process.terminate()
@@ -216,6 +218,11 @@ class CoachEngine:
         current.review_status = "reviewed"
         self.service.save(current)
 
+    def prepare_lyrics(self, job, directory, emit, cancelled):
+        return build_lyrics(
+            self.root, self.data_root, job, directory, run_child, emit, cancelled
+        )
+
 
 def prepare(audio, state, engine):
     audio, state = Path(audio).resolve(), Path(state)
@@ -247,6 +254,15 @@ def prepare(audio, state, engine):
     notes = pitch["notes"]
     if not notes:
         raise ValueError("no_reliable_vocal_notes")
+    lyrics_path = engine.prepare_lyrics(job, directory, emit, cancelled)
+    if cancelled():
+        raise Cancelled("cancelled")
+    emit(phase="aligning")
+    lyrics_hash = digest(lyrics_path)
+    lyrics = read_lyrics(
+        lyrics_path, job, job["duration_seconds"], expected_hash=lyrics_hash
+    )
+    _, alignment = align_words(notes, lyrics["words"], job["duration_seconds"])
     stride = max(1, math.ceil(len(notes) / 512))
     emit(
         status="ready",
@@ -257,6 +273,13 @@ def prepare(audio, state, engine):
         note_count=job["note_count"],
         duration_seconds=job["duration_seconds"],
         voiced_coverage=job["voiced_coverage"],
+        lyrics_path=str(lyrics_path.resolve()),
+        lyrics_sha256=lyrics_hash,
+        lyrics_preview="".join(w["text"] for w in lyrics["words"])[:52],
+        lyric_word_count=alignment["word_count"],
+        low_confidence_word_count=alignment["low_confidence_word_count"],
+        freestyle_word_count=alignment["freestyle_word_count"],
+        chart_note_count=alignment["chart_note_count"],
         preview=[
             [n["start_seconds"], n["end_seconds"], n["midi"]] for n in notes[::stride]
         ],
@@ -264,7 +287,7 @@ def prepare(audio, state, engine):
     return read_state(state)
 
 
-def existing_export(target, job, title, artist):
+def existing_export(target, job, title, artist, lyrics, lyrics_hash):
     """Recover a completed atomic publish, but never overwrite a different pack."""
     try:
         manifest = json.loads((target / "coach.json").read_text(encoding="utf-8"))
@@ -273,6 +296,7 @@ def existing_export(target, job, title, artist):
             manifest["reference_revision"] != job["job_id"]
             or manifest["source_sha256"] != job["source_sha256"]
             or manifest["review_status"] != "reviewed"
+            or manifest.get("lyrics") != "asr_dtw_word_alignment"
             or "#TITLE:" + title not in text.splitlines()
             or "#ARTIST:" + artist not in text.splitlines()
         ):
@@ -280,6 +304,10 @@ def existing_export(target, job, title, artist):
         files = manifest["files"]
         audio = "audio" + Path(job["source_path"]).suffix.casefold()
         expected = {**job["artifacts"], audio: job["source_sha256"]}
+        expected["lyrics.json"] = lyrics_hash
+        expected["lyrics.lrc"] = hashlib.sha256(
+            render_lrc(lyrics["words"]).encode("utf-8")
+        ).hexdigest()
         if set(files) != {*expected, "song.txt"} or any(
             files[n] != sha for n, sha in expected.items()
         ):
@@ -309,14 +337,33 @@ def publish(state, songs_root, title, artist, confirmation, engine):
     if not title or len(title) > 120 or len(artist) > 120:
         raise ValueError("invalid_metadata")
     job, directory = engine.verify(confirmation)
-    target = songs_root / ("coach-" + job["song_id"] + "-" + job["job_id"])
+    if not current.get("lyrics_path") or not current.get("lyrics_sha256"):
+        raise ValueError("lyrics_required")
+    lyrics_path = Path(current["lyrics_path"])
+    lyrics = read_lyrics(
+        lyrics_path,
+        job,
+        job["duration_seconds"],
+        expected_hash=current["lyrics_sha256"],
+    )
+    target = export_target(job, songs_root, current["lyrics_sha256"])
     if target.exists():
-        if not existing_export(target, job, title, artist):
+        if not existing_export(
+            target, job, title, artist, lyrics, current["lyrics_sha256"]
+        ):
             raise FileExistsError("song_pack_exists")
     else:
         engine.confirm(job)
         save_state(state, {**current, "status": "running", "phase": "publishing"})
-        target = export_reference(directory, songs_root, title, artist)
+        target = export_reference(
+            directory,
+            songs_root,
+            title,
+            artist,
+            lyrics_path=lyrics_path,
+            require_lyrics=True,
+            lyrics_sha256=current["lyrics_sha256"],
+        )
     return save_state(
         state,
         {

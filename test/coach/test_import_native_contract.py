@@ -8,6 +8,18 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class ImportNativeContracts(unittest.TestCase):
+    def test_ready_lyrics_are_visible_and_freestyle_is_not_a_pitch_target(self):
+        screen = (ROOT / "src/screens/UScreenCoachImport.pas").read_text(
+            encoding="utf-8"
+        )
+        controller = (ROOT / "src/base/UCoachImport.pas").read_text(encoding="utf-8")
+        self.assertIn("Language.Translate('IMPORT_LYRICS_PREVIEW')", screen)
+        self.assertIn("Obj.Get('lyric_word_count', 0)", controller)
+        singing = (
+            ROOT / "src/screens/controllers/UScreenSingController.pas"
+        ).read_text(encoding="utf-8")
+        self.assertIn("Line.Notes[I].NoteType in [ntNormal, ntGolden]", singing)
+
     def test_shortcuts_use_event_modifiers_not_the_already_released_global_state(self):
         source = (ROOT / "src/base/UMain.pas").read_text(encoding="utf-8")
         screen = (ROOT / "src/screens/UScreenCoachImport.pas").read_text(

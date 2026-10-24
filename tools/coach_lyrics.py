@@ -29,8 +29,14 @@ def model_fingerprint(directory):
     if not all((directory / name).is_file() for name in required):
         raise ValueError("lyrics_model_missing")
     names = list(required)
-    if (directory / "vocabulary.json").is_file():
-        names.append("vocabulary.json")
+    vocabulary = [
+        name
+        for name in ("vocabulary.json", "vocabulary.txt")
+        if (directory / name).is_file()
+    ]
+    if not vocabulary:
+        raise ValueError("lyrics_model_missing")
+    names.extend(vocabulary)
     names.sort()
     value = [(name, file_hash(directory / name)) for name in names]
     return hashlib.sha256(json.dumps(value).encode()).hexdigest()

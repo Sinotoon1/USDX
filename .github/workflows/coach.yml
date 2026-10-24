@@ -72,6 +72,11 @@ jobs:
             game/
             tools/coach_bridge.py
             tools/coach_import.py
+            tools/coach_lyrics.py
+            tools/coach_lyrics_worker.py
+            tools/setup-coach-lyrics.ps1
+            tools/requirements-lyrics.txt
+            tools/requirements-lyrics.lock.txt
             tools/prepare-coach-song.ps1
             docs/coach-quickstart.zh-CN.md
             docs/coach-ui.md
