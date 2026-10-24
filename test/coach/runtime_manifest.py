@@ -2,8 +2,8 @@
 
 import hashlib
 import json
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
 root = Path(__file__).resolve().parents[2]
 game = root / "game"
