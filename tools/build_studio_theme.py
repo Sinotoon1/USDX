@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def generate():
-    design = json.loads((ROOT / "tools/studio-design.json").read_text())
+    design = json.loads((ROOT / "tools/studio-design.json").read_text(encoding="utf-8"))
     base = configparser.RawConfigParser(strict=False)
     base.optionxform = str  # ColorExists uses the original case-sensitive names.
     base.read(ROOT / "game/themes/Modern.ini", encoding="utf-8-sig")
@@ -122,7 +122,7 @@ def generate():
     }.items():
         sections["Colors"][old] = sections["Colors"][token]
 
-    source = (ROOT / "src/base/UThemes.pas").read_text()
+    source = (ROOT / "src/base/UThemes.pas").read_text(encoding="utf-8")
     pages = set(re.findall(r"ThemeLoadBasic\s*\([^,]+,\s*'([^']+)'\)", source))
     pages.update(("SongRoulette", "SongChessboard", "SongList", "JukeboxSongList"))
     stage_pages = ("Sing", "Coach", "EditSub", "JukeboxSing")
