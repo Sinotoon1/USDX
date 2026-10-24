@@ -31,6 +31,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Core compile failed' }
           ./coach-test-bin/coach_core_test.exe
           if ($LASTEXITCODE -ne 0) { throw 'Core tests failed' }
+          & C:/FPC/3.2.2/bin/i386-win32/fpc.exe -Twin64 -Px86_64 -Cr -Fusrc/base -Fusrc/lib/anyascii -FUcoach-test-bin -FEcoach-test-bin test/coach/coach_unicode_test.pas
+          if ($LASTEXITCODE -ne 0) { throw 'Unicode compile failed' }
+          ./coach-test-bin/coach_unicode_test.exe
+          if ($LASTEXITCODE -ne 0) { throw 'Chinese song indexing failed' }
       - name: Upstream runtime DLLs
         shell: pwsh
         env:

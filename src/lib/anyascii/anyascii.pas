@@ -39,7 +39,7 @@ function anyascii(utf32: cardinal; out ascii: PAnsiChar): integer;
 var
 	b: PAnsiChar;
 	loffset: integer;
-	boffset: integer;
+	boffset: longint; // bank offsets exceed 32767; Integer is 16-bit in default FPC mode
 begin
 	anyascii := 0;
 	b := block(utf32 shr 8);
